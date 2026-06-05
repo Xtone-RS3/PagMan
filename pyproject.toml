@@ -1,8 +1,8 @@
 [project]
 name = "Pac-man"
 version = "0.0.1"
-description = "Retrieval Augmented Generation"
+description = "the man that pacs"
 requires-python = ">=3.10"
 dependencies = [
-
+	"pygame"
 ]
