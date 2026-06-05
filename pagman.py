@@ -1,7 +1,7 @@
 from mazegenerator import MazeGenerator
 
 # Create a simple 20x20 maze
-maze_gen = MazeGenerator(width=20, height=20)
+maze_gen = MazeGenerator(seed=10)
 
 # Get the maze structure
 maze_grid = maze_gen.maze

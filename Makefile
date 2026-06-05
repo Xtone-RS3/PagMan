@@ -9,9 +9,9 @@ PY := $(UV) run python
 
 # Force uv to ALWAYS use .venv
 export UV_PROJECT_ENVIRONMENT := .venv
-export UV_CACHE_DIR=/sgoinfre/gasoares/.cache/uv
-export XDG_CACHE_HOME=/sgoinfre/gasoares/.cache
-export TMPDIR=/sgoinfre/gasoares/tmp
+export UV_CACHE_DIR=/sgoinfre/$(USER)/.cache/uv
+export XDG_CACHE_HOME=/sgoinfre/$(USER)/.cache
+export TMPDIR=/sgoinfre/$(USER)/tmp
 
 # =========================
 # INSTALL
@@ -20,16 +20,16 @@ export TMPDIR=/sgoinfre/gasoares/tmp
 install:
 	@echo "Syncing environment with uv..."
 	@uv sync
+	@UV_SKIP_WHEEL_FILENAME_CHECK=1 uv pip install mazegenerator-00001-py3-none-any.whl
 
 
 # =========================
 # RUN
 # =========================
 
-run:
-	install
+run: install
 	@echo "Running..."
-# 	@$(PY) -m $(MODULE) index --max_chunk_size 2000
+	@$(PY) pagman.py
 
 
 # =========================
