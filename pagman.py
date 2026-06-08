@@ -67,15 +67,33 @@ class PacMan:
         print(self.ghosts[0].color, self.ghosts[1].color, self.ghosts[2].color, self.ghosts[3].color)
 
 
-def game():
+def game(maze: MazeGenerator):
     pygame.init()
-    screen = pygame.display.set_mode((720, 720))
+    screen_x = 720
+    cell_x_size = screen_x/maze._width
+    screen_y = 720
+    cell_y_size = screen_y/maze._height
+    screen = pygame.display.set_mode((screen_x, screen_y))
     #  for the window size just do x*height y*width
     clock = pygame.time.Clock()
     clock.tick(30)
-    black = 0, 0, 100  # 0, 0, 0 <- this is pure black
+    black = 10, 10, 26  # 0, 0, 0 <- this is pure black
     #  ^ this is the background, we need to on top of that draw our maze using pygame.draw.line() like this vvv
-    pygame.draw.lines(screen, (150, 150, 150), False, [(0, 0), (720, 720), (500, 0), (0, 500)])
+    # print(maze.maze)
+    #  West, South, East, North
+    walls: List[List[str]] = []
+    for line in maze.maze:
+        wall_line = []
+        for cell in line:
+            cell_walls = bin(cell)[2:]
+            while len(cell_walls) != 4:
+                cell_walls = "0"+cell_walls
+            wall_line.append(cell_walls)
+        walls.append(wall_line)
+    print(walls)
+    wall_color = (68, 136, 221)
+    wall_width = 3
+    # pygame.draw.lines(screen, wall_color, False, [(0, 0), (screen_x, screen_y), (500, 0), (0, 500)])
     #  ^ maybe try a big for loop like on amazing
     pagman = pygame.image.load("PagMan.png")
     pagman = pygame.transform.scale(pagman, (64, 64))
@@ -84,17 +102,31 @@ def game():
     velocity = [1, 1]
     while True:
         pagmanrect = pagmanrect.move(velocity)
-        if pagmanrect.left < 0 or pagmanrect.right > 720:
+        if pagmanrect.left < 0 or pagmanrect.right > screen_x:
             velocity[0] = -velocity[0]
             pagman = pygame.transform.flip(pagman, True, False)
-        if pagmanrect.top < 0 or pagmanrect.bottom > 720:
+        if pagmanrect.top < 0 or pagmanrect.bottom > screen_y:
             velocity[1] = -velocity[1]
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
         # screen update
         screen.fill(black)
-        pygame.draw.lines(screen, (150, 150, 150), False, [(0, 0), (720, 720), (500, 0), (0, 500)])
+        curr_y = 0
+        for line in walls:
+            curr_x = 0
+            for cell in line:
+                if cell[3] == "1":  # North
+                    pygame.draw.line(screen, wall_color, (0+cell_x_size*curr_x, 0+cell_y_size*curr_y), (cell_x_size+cell_x_size*curr_x, 0+cell_y_size*curr_y), wall_width)
+                if cell[2] == "1":  # East
+                    pygame.draw.line(screen, wall_color, (cell_x_size+cell_x_size*curr_x, cell_y_size+cell_y_size*curr_y), (cell_x_size+cell_x_size*curr_x, 0+cell_y_size*curr_y), wall_width)
+                if cell[1] == "1":  # South
+                    pygame.draw.line(screen, wall_color, (cell_x_size+cell_x_size*curr_x, cell_y_size+cell_y_size*curr_y), (0+cell_x_size*curr_x, cell_y_size+cell_y_size*curr_y), wall_width)
+                if cell[0] == "1":  # West
+                    pygame.draw.line(screen, wall_color, (0+cell_x_size*curr_x, 0+cell_y_size*curr_y), (0+cell_x_size*curr_x, cell_y_size+cell_y_size*curr_y), wall_width)
+                curr_x += 1
+            curr_y += 1
+        # pygame.draw.lines(screen, wall_color, False, [(0, 0), (screen_x, screen_y), (500, 0), (0, 500)])
         # ^ this is what re-draws, but we cannot use it, we must re-draw tge whole map
         screen.blit(pagman, pagmanrect)
         pygame.display.flip()
@@ -118,4 +150,4 @@ if __name__ == "__main__":
 
     # print(config)
     pagman = PacMan(maze_gen, config)
-    game()
+    game(maze_gen)
