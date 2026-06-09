@@ -38,7 +38,7 @@ class Player(pygame.sprite.Sprite):
         self.spawn = spawn
         self.position = spawn
         self.lives = lives
-        self.image = pygame.image.load("PagMan.png")
+        self.image = pygame.image.load("image.png")
         self.image = pygame.transform.scale(self.image, (32, 32))
         self.rect = self.image.get_rect()
         self.rect.center = spawn
@@ -74,12 +74,13 @@ class Player(pygame.sprite.Sprite):
             dy = desired_vy + 6
         else:
             dy = 0
-
+        print(desired_vy)
+        print(dy)
         desired_rect = self.rect.move(dx, dy)
         can_turn = not any(desired_rect.clipline(*w) for w in walls)
 
         self.next_vx, self.next_vy = desired_vx, desired_vy
-
+        print(self.next_vx, self.next_vy)
         if can_turn:
             self.vx, self.vy = self.next_vx, self.next_vy
         else:
@@ -104,8 +105,38 @@ class Player(pygame.sprite.Sprite):
                 self.vx = 0
                 self.vy = 0
 
-        self.rect.x += self.vx
-        self.rect.y += self.vy
+        if self.vx > 0:
+            for x in range(self.rect.x, self.rect.x+self.vx):
+                if x % 45 == 0:
+                    self.rect.x = x
+                    break
+            else:
+                self.rect.x += self.vx
+        if self.vx < 0:
+            for x in range(self.rect.x+self.vx, self.rect.x):
+                print(x)
+                if x % 45 == 0:
+                    self.rect.x = x
+                    break
+            else:
+                self.rect.x += self.vx
+        # self.rect.x += self.vx
+        if self.vy > 0:
+            for y in range(self.rect.y, self.rect.y+self.vy):
+                if y % 48 == 0:
+                    self.rect.y = y
+                    break
+            else:
+                self.rect.y += self.vy
+        if self.vy < 0:
+            for y in range(self.rect.y+self.vy, self.rect.y):
+                if y % 48 == 0:
+                    self.rect.y = y
+                    break
+            else:
+                self.rect.y += self.vy
+        # self.rect.y += self.vy
+        print(self.rect.x, self.rect.y)
 
 
 class PacMan:
