@@ -33,20 +33,49 @@ class Ghost:
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, spawn, lives=3):
+    def __init__(self, spawn, cell_w, cell_h, lives=3):
         super().__init__()
         self.spawn = spawn
         self.position = spawn
         self.lives = lives
+        self.cell_w = cell_w
+        self.cell_h = cell_h
         self.image = pygame.image.load("image.png")
         self.image = pygame.transform.scale(self.image, (32, 32))
         self.rect = self.image.get_rect()
         self.rect.center = spawn
         self.vx = 0
+        self.vy = 0
         self.next_vx = 0
         self.next_vy = 0
-        self.vy = 0
         self.speed = 3
+
+    # vvvvvv MIGHT WANT TO MOVE ALL THIS MOVEMENT SHIT TO THE GAME'S CLASS SO GHOSTS HAVE ACCESS vvvvvvv
+    def overlaps_wall(self, walls):
+        inflated = self.rect.inflate(12, 13)  # this is THE crux, what this does is extend the collision so the walls get detected "sooner" (made up numbers)
+        for (x1, y1), (x2, y2) in walls:
+            if inflated.clipline(x1, y1, x2, y2):
+                return True
+        return False
+
+    def move_axis(self, dx, dy, walls) -> bool:  # checks movements per step, not per speed, VERY IMPORTANT
+        self.rect.x += dx
+        self.rect.y += dy
+        if self.overlaps_wall(walls):  # STEP BACK and find the LAST valid position
+            self.rect.x -= dx
+            self.rect.y -= dy
+            steps = max(abs(dx), abs(dy))
+            step_x = dx / steps if steps else 0  # binary search for the furthest we can go
+            step_y = dy / steps if steps else 0  # less math-y than what i like, but simpler to explain
+            for _ in range(steps):
+                self.rect.x += int(step_x)
+                self.rect.y += int(step_y)
+                if self.overlaps_wall(walls):
+                    self.rect.x -= int(step_x)
+                    self.rect.y -= int(step_y)
+                    break
+            return False  # hit a wall
+        return True  # moved freely
 
     def update(self, walls):
         keys = pygame.key.get_pressed()
@@ -61,86 +90,25 @@ class Player(pygame.sprite.Sprite):
         elif keys[pygame.K_DOWN]:
             desired_vx, desired_vy = 0, self.speed
 
-        if desired_vx < 0:
-            dx = desired_vx - 6
-        elif desired_vx > 0:
-            dx = desired_vx + 6
-        else:
-            dx = 0
+        if (desired_vx, desired_vy) != (self.vx, self.vy):  # same as before but smarter lol
+            self.next_vx, self.next_vy = desired_vx, desired_vy
 
-        if desired_vy < 0:
-            dy = desired_vy - 6
-        elif desired_vy > 0:
-            dy = desired_vy + 6
-        else:
-            dy = 0
-        print(desired_vy)
-        print(dy)
-        desired_rect = self.rect.move(dx, dy)
-        can_turn = not any(desired_rect.clipline(*w) for w in walls)
+        if (self.next_vx, self.next_vy) != (self.vx, self.vy):
+            # Speculatively move to test
+            orig_x, orig_y = self.rect.x, self.rect.y
+            moved_freely = self.move_axis(self.next_vx, self.next_vy, walls)
+            self.rect.x, self.rect.y = orig_x, orig_y  # restore
+            if moved_freely:
+                self.vx, self.vy = self.next_vx, self.next_vy
 
-        self.next_vx, self.next_vy = desired_vx, desired_vy
-        print(self.next_vx, self.next_vy)
-        if can_turn:
-            self.vx, self.vy = self.next_vx, self.next_vy
-        else:
-            if self.vx < 0:
-                current_dx = self.vx - 6
-            elif self.vx > 0:
-                current_dx = self.vx + 6
-            else:
-                current_dx = 0
-
-            if self.vy < 0:
-                current_dy = self.vy - 6
-            elif self.vy > 0:
-                current_dy = self.vy + 6
-            else:
-                current_dy = 0
-
-            current_rect = self.rect.move(current_dx, current_dy)
-            can_keep_moving = not any(current_rect.clipline(*w) for w in walls)
-
-            if not can_keep_moving:
-                self.vx = 0
-                self.vy = 0
-
-        if self.vx > 0:
-            for x in range(self.rect.x, self.rect.x+self.vx):
-                if x % 45 == 0:
-                    self.rect.x = x
-                    break
-            else:
-                self.rect.x += self.vx
-        if self.vx < 0:
-            for x in range(self.rect.x+self.vx, self.rect.x):
-                print(x)
-                if x % 45 == 0:
-                    self.rect.x = x
-                    break
-            else:
-                self.rect.x += self.vx
-        # self.rect.x += self.vx
-        if self.vy > 0:
-            for y in range(self.rect.y, self.rect.y+self.vy):
-                if y % 48 == 0:
-                    self.rect.y = y
-                    break
-            else:
-                self.rect.y += self.vy
-        if self.vy < 0:
-            for y in range(self.rect.y+self.vy, self.rect.y):
-                if y % 48 == 0:
-                    self.rect.y = y
-                    break
-            else:
-                self.rect.y += self.vy
-        # self.rect.y += self.vy
-        print(self.rect.x, self.rect.y)
+        # Actually move
+        moved_freely = self.move_axis(self.vx, self.vy, walls)
+        if not moved_freely:
+            self.vx, self.vy = 0, 0
 
 
 class PacMan:
-    def __init__(self, maze, config, spawn_x, spawn_y):
+    def __init__(self, maze, config, spawn_x, spawn_y, cell_x_size, cell_y_size):
         self.maze: MazeGenerator = maze
         self.config = config
         self.ghost_spawn = [
@@ -150,7 +118,7 @@ class PacMan:
             [0, config["width"]-1]
         ]
         self.ghosts: List[Ghost] = []
-        self.player = Player(spawn=(spawn_x, spawn_y), lives=self.config["lives"])
+        self.player = Player(spawn=(spawn_x, spawn_y), cell_w=cell_x_size, cell_h=cell_y_size, lives=self.config["lives"])
         self.pacgum = config["pacgum"]
         self.points_per_pacgum = config["points_per_pacgum"]
         self.points_per_super_pacgum = config["points_per_super_pacgum"]
@@ -165,8 +133,6 @@ class PacMan:
             color_list.remove(color)
             self.ghosts.append(Ghost(spawn=coords, color=color))  # why always same color wtf?
         print(self.ghosts[0].color, self.ghosts[1].color, self.ghosts[2].color, self.ghosts[3].color)
-
-
 
 
 def game(maze: MazeGenerator, config: dict):
@@ -241,7 +207,7 @@ def game(maze: MazeGenerator, config: dict):
     mid_row = (maze._height - 1) // 2
     spawn_x = mid_col * cell_x_size + cell_x_size / 2
     spawn_y = mid_row * cell_y_size + cell_y_size / 2
-    pagman = PacMan(maze_gen, config, spawn_x, spawn_y)
+    pagman = PacMan(maze_gen, config, spawn_x, spawn_y, cell_x_size, cell_y_size)
     group = pygame.sprite.GroupSingle()
     player = pagman.player
     group.add(player)
