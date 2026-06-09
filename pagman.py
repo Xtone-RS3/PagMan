@@ -32,15 +32,48 @@ class Ghost:
         # Dark blue: run away
 
 
-class Player:
+class Player(pygame.sprite.Sprite):
     def __init__(self, spawn, lives=3):
+        super().__init__()
         self.spawn = spawn  # [x, y]
         self.position = spawn
         self.lives = lives
+        self.image = pygame.image.load("PagMan.png")
+        self.image = pygame.transform.scale(self.image, (32, 32))
+        self.rect = self.image.get_rect()
+        self.rect.center = spawn
+        self.vx = 0
+        self.vy = 0
+        self.speed = 3
+        print(spawn)
+
+    def update(self, walls):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.vx = -self.speed
+            self.vy = 0
+        elif keys[pygame.K_RIGHT]:
+            self.vx = self.speed
+            self.vy = 0
+        elif keys[pygame.K_UP]:
+            self.vx = 0
+            self.vy = -self.speed
+        elif keys[pygame.K_DOWN]:
+            self.vx = 0
+            self.vy = self.speed
+        can_move = True
+        next_rect = self.rect.move(self.vx, self.vy)  # posição futura
+        for wall in walls:
+            if next_rect.clipline(*wall):
+                can_move = False
+                break
+        if can_move:
+            self.rect.x += self.vx
+            self.rect.y += self.vy
 
 
 class PacMan:
-    def __init__(self, maze, config):
+    def __init__(self, maze, config, spawn_x, spawn_y):
         self.maze: MazeGenerator = maze
         self.config = config
         self.ghost_spawn = [
@@ -50,7 +83,7 @@ class PacMan:
             [0, config["width"]-1]
         ]
         self.ghosts: List[Ghost] = []
-        self.player = Player(spawn=[config["height"]/2, config["width"]/2], lives=self.config["lives"])
+        self.player = Player(spawn=(spawn_x, spawn_y), lives=self.config["lives"])
         self.pacgum = config["pacgum"]
         self.points_per_pacgum = config["points_per_pacgum"]
         self.points_per_super_pacgum = config["points_per_super_pacgum"]
@@ -67,13 +100,17 @@ class PacMan:
         print(self.ghosts[0].color, self.ghosts[1].color, self.ghosts[2].color, self.ghosts[3].color)
 
 
-def game(maze: MazeGenerator):
+
+
+def game(maze: MazeGenerator, config: dict):
     pygame.init()
     screen_x = 720
     cell_x_size = screen_x/maze._width
     screen_y = 720
     cell_y_size = screen_y/maze._height
     screen = pygame.display.set_mode((screen_x, screen_y))
+    maze_surface = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
+    maze_surface.fill((0, 0, 0, 0))
     #  for the window size just do x*height y*width
     clock = pygame.time.Clock()
     clock.tick(30)
@@ -93,42 +130,62 @@ def game(maze: MazeGenerator):
     print(walls)
     wall_color = (68, 136, 221)
     wall_width = 3
+    wall_collision = []
+    # sprites = pygame.sprite.Group()
+    # objects = pygame.sprite.Group()
+    curr_y = 0
+    for line in walls:
+        curr_x = 0
+        for cell in line:
+            if cell[3] == "1":  # North
+                start_x = 0+cell_x_size*curr_x
+                start_y = 0+cell_y_size*curr_y
+                end_x = cell_x_size+cell_x_size*curr_x
+                end_y = 0+cell_y_size*curr_y
+                wall_collision.append(((start_x, start_y), (end_x, end_y)))
+                pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
+            if cell[2] == "1":  # East
+                start_x = cell_x_size+cell_x_size*curr_x
+                start_y = cell_y_size+cell_y_size*curr_y
+                end_x = cell_x_size+cell_x_size*curr_x
+                end_y = 0+cell_y_size*curr_y
+                wall_collision.append(((start_x, start_y), (end_x, end_y)))
+                pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
+            if cell[1] == "1":  # South
+                start_x = cell_x_size+cell_x_size*curr_x
+                start_y = cell_y_size+cell_y_size*curr_y
+                end_x = 0+cell_x_size*curr_x
+                end_y = cell_y_size+cell_y_size*curr_y
+                wall_collision.append(((start_x, start_y), (end_x, end_y)))
+                pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
+            if cell[0] == "1":  # West
+                start_x = 0+cell_x_size*curr_x
+                start_y = 0+cell_y_size*curr_y
+                end_x = 0+cell_x_size*curr_x
+                end_y = cell_y_size+cell_y_size*curr_y
+                wall_collision.append(((start_x, start_y), (end_x, end_y)))
+                pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
+            curr_x += 1
+        curr_y += 1
     # pygame.draw.lines(screen, wall_color, False, [(0, 0), (screen_x, screen_y), (500, 0), (0, 500)])
     #  ^ maybe try a big for loop like on amazing
-    pagman = pygame.image.load("PagMan.png")
-    pagman = pygame.transform.scale(pagman, (64, 64))
-    pagmanrect = pagman.get_rect()
-    #  ^ this sets the hit box for the player pagman, meaning, you know when that hit box hits stuff
-    velocity = [1, 1]
+    mid_col = (maze._width - 1) // 2
+    mid_row = (maze._height - 1) // 2
+    spawn_x = mid_col * cell_x_size + cell_x_size / 2
+    spawn_y = mid_row * cell_y_size + cell_y_size / 2
+    pagman = PacMan(maze_gen, config, spawn_x, spawn_y)
+    group = pygame.sprite.GroupSingle()
+    player = pagman.player
+    group.add(player)
     while True:
-        pagmanrect = pagmanrect.move(velocity)
-        if pagmanrect.left < 0 or pagmanrect.right > screen_x:
-            velocity[0] = -velocity[0]
-            pagman = pygame.transform.flip(pagman, True, False)
-        if pagmanrect.top < 0 or pagmanrect.bottom > screen_y:
-            velocity[1] = -velocity[1]
+        clock.tick(30)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-        # screen update
         screen.fill(black)
-        curr_y = 0
-        for line in walls:
-            curr_x = 0
-            for cell in line:
-                if cell[3] == "1":  # North
-                    pygame.draw.line(screen, wall_color, (0+cell_x_size*curr_x, 0+cell_y_size*curr_y), (cell_x_size+cell_x_size*curr_x, 0+cell_y_size*curr_y), wall_width)
-                if cell[2] == "1":  # East
-                    pygame.draw.line(screen, wall_color, (cell_x_size+cell_x_size*curr_x, cell_y_size+cell_y_size*curr_y), (cell_x_size+cell_x_size*curr_x, 0+cell_y_size*curr_y), wall_width)
-                if cell[1] == "1":  # South
-                    pygame.draw.line(screen, wall_color, (cell_x_size+cell_x_size*curr_x, cell_y_size+cell_y_size*curr_y), (0+cell_x_size*curr_x, cell_y_size+cell_y_size*curr_y), wall_width)
-                if cell[0] == "1":  # West
-                    pygame.draw.line(screen, wall_color, (0+cell_x_size*curr_x, 0+cell_y_size*curr_y), (0+cell_x_size*curr_x, cell_y_size+cell_y_size*curr_y), wall_width)
-                curr_x += 1
-            curr_y += 1
-        # pygame.draw.lines(screen, wall_color, False, [(0, 0), (screen_x, screen_y), (500, 0), (0, 500)])
-        # ^ this is what re-draws, but we cannot use it, we must re-draw tge whole map
-        screen.blit(pagman, pagmanrect)
+        screen.blit(maze_surface, (0, 0))
+        group.update(wall_collision)   # <- move all sprites
+        group.draw(screen)
         pygame.display.flip()
 
 
@@ -149,5 +206,4 @@ if __name__ == "__main__":
     # print(hex_lists2)
 
     # print(config)
-    pagman = PacMan(maze_gen, config)
-    game(maze_gen)
+    game(maze_gen, config)

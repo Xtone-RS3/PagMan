@@ -8,10 +8,7 @@ UV := uv
 PY := $(UV) run python
 
 # Force uv to ALWAYS use .venv
-export UV_PROJECT_ENVIRONMENT := .venv
-export UV_CACHE_DIR=/sgoinfre/$(USER)/.cache/uv
-export XDG_CACHE_HOME=/sgoinfre/$(USER)/.cache
-export TMPDIR=/sgoinfre/$(USER)/tmp
+
 
 # =========================
 # INSTALL
