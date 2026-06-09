@@ -43,33 +43,47 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = spawn
         self.vx = 0
+        self.next_vx = 0
+        self.next_vy = 0
         self.vy = 0
         self.speed = 3
         print(spawn)
 
     def update(self, walls):
         keys = pygame.key.get_pressed()
+        self.vx, self.vy = 0, 0
+        # teclas só atualizam a direção pretendida
         if keys[pygame.K_LEFT]:
-            self.vx = -self.speed
-            self.vy = 0
+            self.next_vx, self.next_vy = -self.speed, 0
         elif keys[pygame.K_RIGHT]:
-            self.vx = self.speed
-            self.vy = 0
+            self.next_vx, self.next_vy = self.speed, 0
         elif keys[pygame.K_UP]:
-            self.vx = 0
-            self.vy = -self.speed
+            self.next_vx, self.next_vy = 0, -self.speed
         elif keys[pygame.K_DOWN]:
-            self.vx = 0
-            self.vy = self.speed
-        can_move = True
-        next_rect = self.rect.move(self.vx, self.vy)  # posição futura
-        for wall in walls:
-            if next_rect.clipline(*wall):
-                can_move = False
-                break
+            self.next_vx, self.next_vy = 0, self.speed
+
+        if self.next_vx < 0:
+            dx = self.next_vx - 6
+        elif self.next_vx > 0:
+            dx = self.next_vx + 6
+        else:
+            dx = 0
+
+        if self.next_vy < 0:
+            dy = self.next_vy - 6
+        elif self.next_vy > 0:
+            dy = self.next_vy + 6
+        else:
+            dy = 0
+
+        next_rect = self.rect.move(dx, dy)
+
+        can_move = not any(next_rect.clipline(*w) for w in walls)
         if can_move:
-            self.rect.x += self.vx
-            self.rect.y += self.vy
+            self.vx, self.vy = self.next_vx, self.next_vy
+
+        self.rect.x += self.vx
+        self.rect.y += self.vy
 
 
 class PacMan:
@@ -106,6 +120,7 @@ def game(maze: MazeGenerator, config: dict):
     pygame.init()
     screen_x = 720
     cell_x_size = screen_x/maze._width
+    print(cell_x_size)
     screen_y = 720
     cell_y_size = screen_y/maze._height
     screen = pygame.display.set_mode((screen_x, screen_y))
