@@ -35,7 +35,7 @@ class Ghost:
 class Player(pygame.sprite.Sprite):
     def __init__(self, spawn, lives=3):
         super().__init__()
-        self.spawn = spawn  # [x, y]
+        self.spawn = spawn
         self.position = spawn
         self.lives = lives
         self.image = pygame.image.load("PagMan.png")
@@ -47,40 +47,62 @@ class Player(pygame.sprite.Sprite):
         self.next_vy = 0
         self.vy = 0
         self.speed = 3
-        print(spawn)
 
     def update(self, walls):
         keys = pygame.key.get_pressed()
-        self.vx, self.vy = 0, 0
-        # teclas só atualizam a direção pretendida
-        if keys[pygame.K_LEFT]:
-            self.next_vx, self.next_vy = -self.speed, 0
-        elif keys[pygame.K_RIGHT]:
-            self.next_vx, self.next_vy = self.speed, 0
-        elif keys[pygame.K_UP]:
-            self.next_vx, self.next_vy = 0, -self.speed
-        elif keys[pygame.K_DOWN]:
-            self.next_vx, self.next_vy = 0, self.speed
+        desired_vx, desired_vy = self.next_vx, self.next_vy
 
-        if self.next_vx < 0:
-            dx = self.next_vx - 6
-        elif self.next_vx > 0:
-            dx = self.next_vx + 6
+        if keys[pygame.K_LEFT]:
+            desired_vx, desired_vy = -self.speed, 0
+        elif keys[pygame.K_RIGHT]:
+            desired_vx, desired_vy = self.speed, 0
+        elif keys[pygame.K_UP]:
+            desired_vx, desired_vy = 0, -self.speed
+        elif keys[pygame.K_DOWN]:
+            desired_vx, desired_vy = 0, self.speed
+
+        if desired_vx < 0:
+            dx = desired_vx - 6
+        elif desired_vx > 0:
+            dx = desired_vx + 6
         else:
             dx = 0
 
-        if self.next_vy < 0:
-            dy = self.next_vy - 6
-        elif self.next_vy > 0:
-            dy = self.next_vy + 6
+        if desired_vy < 0:
+            dy = desired_vy - 6
+        elif desired_vy > 0:
+            dy = desired_vy + 6
         else:
             dy = 0
 
-        next_rect = self.rect.move(dx, dy)
+        desired_rect = self.rect.move(dx, dy)
+        can_turn = not any(desired_rect.clipline(*w) for w in walls)
 
-        can_move = not any(next_rect.clipline(*w) for w in walls)
-        if can_move:
+        self.next_vx, self.next_vy = desired_vx, desired_vy
+
+        if can_turn:
             self.vx, self.vy = self.next_vx, self.next_vy
+        else:
+            if self.vx < 0:
+                current_dx = self.vx - 6
+            elif self.vx > 0:
+                current_dx = self.vx + 6
+            else:
+                current_dx = 0
+
+            if self.vy < 0:
+                current_dy = self.vy - 6
+            elif self.vy > 0:
+                current_dy = self.vy + 6
+            else:
+                current_dy = 0
+
+            current_rect = self.rect.move(current_dx, current_dy)
+            can_keep_moving = not any(current_rect.clipline(*w) for w in walls)
+
+            if not can_keep_moving:
+                self.vx = 0
+                self.vy = 0
 
         self.rect.x += self.vx
         self.rect.y += self.vy
