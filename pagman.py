@@ -18,13 +18,14 @@ import pygame
 
 
 class Ghost:
-    def __init__(self, spawn, color):
+    def __init__(self, spawn, color, images):
         self.is_alive = True
         self.is_edible = False
         self.spawn = spawn  # [x, y]
         self.color = color
         self.personality = ""
         self.position = spawn
+        self.images: list[pygame.image.Surface] = images
         # Red (Blinky): Relentlessly chases Pac-Man directly.
         # Pink (Pinky): Tries to position herself ahead of Pac-Man to trap him.
         # Cyan/Light Blue (Inky): Has an unpredictable, flanking personality.
@@ -33,13 +34,11 @@ class Ghost:
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, spawn, cell_w, cell_h, lives=3):
+    def __init__(self, spawn, lives=3):
         super().__init__()
-        self.spawn = spawn
+        self.spawn = spawn  # PacMan class
         self.position = spawn
         self.lives = lives
-        self.cell_w = cell_w
-        self.cell_h = cell_h
         self.orig_image = pygame.image.load("PagMan.png")
         self.orig_image = pygame.transform.scale(self.orig_image, (32, 32))
         self.angle = 0
@@ -50,7 +49,7 @@ class Player(pygame.sprite.Sprite):
         self.vy = 0
         self.next_vx = 0
         self.next_vy = 0
-        self.speed = 5
+        self.speed = 5  # PacMan class
 
     def rotate_image(self, angle):
         center = self.rect.center
@@ -122,7 +121,7 @@ class Player(pygame.sprite.Sprite):
 
 
 class PacMan:
-    def __init__(self, maze, config, spawn_x, spawn_y, cell_x_size, cell_y_size):
+    def __init__(self, maze, config, spawn_x, spawn_y, image_list):
         self.maze: MazeGenerator = maze
         self.config = config
         self.ghost_spawn = [
@@ -132,12 +131,14 @@ class PacMan:
             [0, config["width"]-1]
         ]
         self.ghosts: List[Ghost] = []
-        self.player = Player(spawn=(spawn_x, spawn_y), cell_w=cell_x_size, cell_h=cell_y_size, lives=self.config["lives"])
+        self.player = Player(spawn=(spawn_x, spawn_y), lives=self.config["lives"])
         self.pacgum = config["pacgum"]
         self.points_per_pacgum = config["points_per_pacgum"]
         self.points_per_super_pacgum = config["points_per_super_pacgum"]
         self.points_per_ghost = config["points_per_ghost"]
         self.level_max_time = config["level_max_time"]
+        self.image_list = image_list
+        print(self.image_list)
         self.ghost_gen()
 
     def ghost_gen(self):
@@ -145,7 +146,20 @@ class PacMan:
         for coords in self.ghost_spawn:
             color = random.choice(color_list)
             color_list.remove(color)
-            self.ghosts.append(Ghost(spawn=coords, color=color))  # why always same color wtf?
+            self.ghosts.append(
+                Ghost(
+                    spawn=coords,
+                    color=color,
+                    images=[
+                        self.image_list[color],
+                        self.image_list["down_eyes"],
+                        self.image_list["up_eyes"],
+                        self.image_list["right_eyes"],
+                        self.image_list["left_eyes"],
+                        self.image_list["dead"]
+                    ]
+                )
+            )  # why always same color wtf?
         print(self.ghosts[0].color, self.ghosts[1].color, self.ghosts[2].color, self.ghosts[3].color)
 
 
@@ -229,8 +243,22 @@ def game(maze: MazeGenerator, config: dict):
     mid_row = (maze._height - 1) // 2
     spawn_x = mid_col * cell_x_size + cell_x_size / 2
     spawn_y = mid_row * cell_y_size + cell_y_size / 2
-    pagman = PacMan(maze_gen, config, spawn_x, spawn_y, cell_x_size, cell_y_size)
-    group = pygame.sprite.GroupSingle()
+    image_list = {}
+    folder = {
+        "cyan": "pacmen/cyan_ghost.png",
+        "red": "pacmen/red_ghost.png",
+        "orange": "pacmen/orange_ghost.png",
+        "pink": "pacmen/pink_ghost.png",
+        "right_eyes": "pacmen/right_eyes.png",
+        "left_eyes": "pacmen/left_eyes.png",
+        "up_eyes": "pacmen/up_eyes.png",
+        "down_eyes": "pacmen/down_eyes.png",
+        "dead": "pacmen/dead.png"
+    }
+    for key, file in folder.items():
+        image_list[key] = pygame.image.load(file)
+    pagman = PacMan(maze_gen, config, spawn_x, spawn_y, image_list)
+    group: pygame.sprite.GroupSingle = pygame.sprite.GroupSingle()
     player = pagman.player
     group.add(player)
     while True:
