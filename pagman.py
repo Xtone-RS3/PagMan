@@ -40,7 +40,7 @@ class Player(pygame.sprite.Sprite):
         self.lives = lives
         self.cell_w = cell_w
         self.cell_h = cell_h
-        self.orig_image = pygame.image.load("pacman.png")
+        self.orig_image = pygame.image.load("PagMan.png")
         self.orig_image = pygame.transform.scale(self.orig_image, (32, 32))
         self.angle = 0
         self.image = self.orig_image
