@@ -40,15 +40,25 @@ class Player(pygame.sprite.Sprite):
         self.lives = lives
         self.cell_w = cell_w
         self.cell_h = cell_h
-        self.image = pygame.image.load("image.png")
-        self.image = pygame.transform.scale(self.image, (32, 32))
-        self.rect = self.image.get_rect()
+        self.orig_image = pygame.image.load("pacman.png")
+        self.orig_image = pygame.transform.scale(self.orig_image, (32, 32))
+        self.angle = 0
+        self.image = self.orig_image
+        self.rect = self.orig_image.get_rect()
         self.rect.center = spawn
         self.vx = 0
         self.vy = 0
         self.next_vx = 0
         self.next_vy = 0
-        self.speed = 3
+        self.speed = 5
+
+    def rotate_image(self, angle):
+        center = self.rect.center
+        self.angle = angle
+        self.image = pygame.transform.rotate(
+            self.orig_image, self.angle
+        )
+        self.rect = self.image.get_rect(center=center)
 
     # vvvvvv MIGHT WANT TO MOVE ALL THIS MOVEMENT SHIT TO THE GAME'S CLASS SO GHOSTS HAVE ACCESS vvvvvvv
     def overlaps_wall(self, walls):
@@ -83,12 +93,16 @@ class Player(pygame.sprite.Sprite):
 
         if keys[pygame.K_LEFT]:
             desired_vx, desired_vy = -self.speed, 0
+            self.rotate_image(180)
         elif keys[pygame.K_RIGHT]:
             desired_vx, desired_vy = self.speed, 0
+            self.rotate_image(0)
         elif keys[pygame.K_UP]:
             desired_vx, desired_vy = 0, -self.speed
+            self.rotate_image(90)
         elif keys[pygame.K_DOWN]:
             desired_vx, desired_vy = 0, self.speed
+            self.rotate_image(270)
 
         if (desired_vx, desired_vy) != (self.vx, self.vy):  # same as before but smarter lol
             self.next_vx, self.next_vy = desired_vx, desired_vy
@@ -171,6 +185,14 @@ def game(maze: MazeGenerator, config: dict):
     for line in walls:
         curr_x = 0
         for cell in line:
+            px = cell_x_size * curr_x
+            py = cell_y_size * curr_y
+
+            if maze.maze[curr_y][curr_x] == 15:
+                pygame.draw.rect(maze_surface, (26, 58, 106), (px, py, cell_x_size, cell_y_size))
+                pygame.draw.rect(maze_surface, (68, 136, 221), (px + 3, py + 3, cell_x_size - 6, cell_y_size - 6), 2)
+                curr_x += 1
+                continue
             if cell[3] == "1":  # North
                 start_x = 0+cell_x_size*curr_x
                 start_y = 0+cell_y_size*curr_y
