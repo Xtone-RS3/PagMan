@@ -27,7 +27,17 @@ class Ghost(pygame.sprite.Sprite, ABC):
         )
 
     @abstractmethod
-    def update(self, walls, player: Player):
+    def update(self, walls):
+        pass
+
+    def death_routine(self, player: Player):
+        if player.grid_pos[1] == self.movement.grid_y and player.grid_pos[0] == self.movement.grid_x:
+            player.death()
+
+    def escape(self, player: Player):
+        pass
+
+    def respawn(self):
         pass
 
 
@@ -40,13 +50,9 @@ class redGhost(Ghost):
             cell_x_size,
             cell_y_size,
         )
-        self.personality = "chase"
 
     def update(self, walls, player: Player):
-        print(player.grid_pos)
-        print(self.movement.grid_y)
-        if player.grid_pos[1] == self.movement.grid_y and player.grid_pos[0] == self.movement.grid_x:
-            raise ValueError("Game Over")
+        self.death_routine(player)
         # print(next_dir_x)
         # self.choose_direction(walls)
         # next_dir_x = random.choice([-1, 0, 1])

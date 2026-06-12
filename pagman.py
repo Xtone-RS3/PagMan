@@ -5,6 +5,7 @@ import random
 from typing import List
 import pygame
 from ghosts import *
+# from ghosts import redGhost, Ghost
 # import ghosts
 
 # # Create a simple 20x20 maze
@@ -142,14 +143,16 @@ class Player(pygame.sprite.Sprite):
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
         self.lives = lives
-        self.orig_image = pygame.image.load("pacman3.png")
-        self.orig_image = pygame.transform.scale(
-            self.orig_image,
-            (min(int(cell_x_size), 32), min(int(cell_y_size), 32))
-        )
-        self.angle = 0
-        self.image = self.orig_image
-        self.rect = self.orig_image.get_rect()
+        self.orig_image = [pygame.image.load("PagMan.png"), pygame.image.load("PauseMan.png")]
+        self.orig_image = [
+            pygame.transform.scale(self.orig_image[0], (min(int(cell_x_size), 32), min(int(cell_y_size), 32))),
+            pygame.transform.scale(self.orig_image[1], (min(int(cell_x_size), 32), min(int(cell_y_size), 32)))
+        ]
+        self.frame: int = 0
+        self.current = self.orig_image[self.frame]
+        self.last_angle = 0
+        self.image = self.orig_image[self.frame]
+        self.rect = self.orig_image[0].get_rect()
         self.pixel_x, self.pixel_y = spawn
         self.rect.center = (int(self.pixel_x), int(self.pixel_y))
 
@@ -165,13 +168,24 @@ class Player(pygame.sprite.Sprite):
             spawn,
             speed=5
         )
+        self.interval = 200
+        self.next_tick = pygame.time.get_ticks() + self.interval
 
-    def rotate_image(self, angle):
+    def update_image(self):  # copy this exact logic for ghost eyes
         center = self.rect.center
-        self.angle = angle
-        self.image = pygame.transform.rotate(
-            self.orig_image, self.angle
-        )
+        image = self.orig_image[self.frame]
+        if self.movement.dir_x == -1 or (self.movement.dir_x == 0 and self.movement.dir_y == 0 and self.last_angle == -180):
+            self.last_angle = -180
+            image = pygame.transform.flip(image, True, False)
+        elif self.movement.dir_y == -1 or (self.movement.dir_x == 0 and self.movement.dir_y == 0 and self.last_angle == 90):
+            self.last_angle = 90
+            image = pygame.transform.rotate(image, 90)
+        elif self.movement.dir_y == 1 or (self.movement.dir_x == 0 and self.movement.dir_y == 0 and self.last_angle == -90):
+            self.last_angle = -90
+            image = pygame.transform.rotate(image, -90)
+        else:
+            self.last_angle = 0
+        self.image = image
         self.rect = self.image.get_rect(center=center)
 
     @property
@@ -181,7 +195,7 @@ class Player(pygame.sprite.Sprite):
             int(self.movement.pixel_y // self.cell_y_size)
         )
 
-    def update(self, walls):
+    def update(self, walls, current_time):
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
@@ -198,6 +212,20 @@ class Player(pygame.sprite.Sprite):
             int(self.movement.pixel_x),
             int(self.movement.pixel_y)
         )
+        moving = (
+            self.movement.dir_x != 0 or self.movement.dir_y != 0
+        )
+        if not moving:
+            self.frame = 1
+            self.update_image()
+        if moving and current_time >= self.next_tick:
+            self.next_tick += self.interval
+            self.frame = (self.frame + 1) % len(self.orig_image)
+            self.update_image()
+
+    def death(self):
+        sys.exit()
+        # raise ValueError("Game Over")
 
 
 class PacMan:
@@ -364,12 +392,13 @@ def game(maze: MazeGenerator, config: dict):
     pacman_group.add(pagman.player)
     while True:
         clock.tick(30)
+        current_time = pygame.time.get_ticks()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
         screen.fill(black)
         screen.blit(maze_surface, (0, 0))
-        pacman_group.update(walls)   # <- move all sprites using grid logically
+        pacman_group.update(walls, current_time)   # <- move all sprites using grid logically
         pacman_group.draw(screen)
         ghost0_group.update(walls, pagman.player)
         ghost0_group.draw(screen)
