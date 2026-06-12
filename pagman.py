@@ -17,39 +17,11 @@ import pygame
 # print(f"Shortest path length: {len(shortest_path)}")
 
 
-class Ghost:
-    def __init__(self, spawn, color, images):
-        self.is_alive = True
-        self.is_edible = False
-        self.spawn = spawn  # [x, y]
-        self.color = color
-        self.personality = ""
-        self.position = spawn
-        self.images: list[pygame.image.Surface] = images
-        # Red (Blinky): Relentlessly chases Pac-Man directly.
-        # Pink (Pinky): Tries to position herself ahead of Pac-Man to trap him.
-        # Cyan/Light Blue (Inky): Has an unpredictable, flanking personality.
-        # Orange (Clyde): Wanders aimlessly or moves randomly.
-        # Dark blue: run away
-
-
-class Player(pygame.sprite.Sprite):
-    def __init__(self, spawn, cell_x_size, cell_y_size, lives=3):
-        super().__init__()
-        self.spawn = spawn  # PacMan class
-        self.cell_x_size = cell_x_size
+class Movement():
+    def __init__(self, cell_x_size, cell_y_size, spawn, speed):
+        self.cell_x_size = cell_x_size  # needed?
         self.cell_y_size = cell_y_size
-        self.lives = lives
-        self.orig_image = pygame.image.load("pacman3.png")
-        self.orig_image = pygame.transform.scale(
-            self.orig_image,
-            (min(int(cell_x_size), 32), min(int(cell_y_size), 32))
-        )
-        self.angle = 0
-        self.image = self.orig_image
-        self.rect = self.orig_image.get_rect()
         self.pixel_x, self.pixel_y = spawn
-        self.rect.center = (int(self.pixel_x), int(self.pixel_y))
 
         self.grid_x = int(self.pixel_x // cell_x_size)
         self.grid_y = int(self.pixel_y // cell_y_size)
@@ -58,15 +30,7 @@ class Player(pygame.sprite.Sprite):
         self.dir_y = 0
         self.next_dir_x = 0
         self.next_dir_y = 0
-        self.speed = 10  # PacMan class
-
-    def rotate_image(self, angle):
-        center = self.rect.center
-        self.angle = angle
-        self.image = pygame.transform.rotate(
-            self.orig_image, self.angle
-        )
-        self.rect = self.image.get_rect(center=center)
+        self.speed = speed
 
     def can_move(self, walls, col, row, dx, dy):
         if row < 0 or row >= len(walls) or col < 0 or col >= len(walls[0]):
@@ -83,18 +47,8 @@ class Player(pygame.sprite.Sprite):
             return False  # North
         return True
 
-    def update(self, walls):
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_LEFT]:
-            self.next_dir_x, self.next_dir_y = -1, 0
-        elif keys[pygame.K_RIGHT]:
-            self.next_dir_x, self.next_dir_y = 1, 0
-        elif keys[pygame.K_UP]:
-            self.next_dir_x, self.next_dir_y = 0, -1
-        elif keys[pygame.K_DOWN]:
-            self.next_dir_x, self.next_dir_y = 0, 1
-
+    def update(self, walls, next_dir_x, next_dir_y) -> tuple[int, int]:
+        self.next_dir_x, self.next_dir_y = next_dir_x, next_dir_y
         # Calculate the center pixel of the current grid cell
         target_pixel_x = self.grid_x * self.cell_x_size + self.cell_x_size / 2
         target_pixel_y = self.grid_y * self.cell_y_size + self.cell_y_size / 2
@@ -122,22 +76,120 @@ class Player(pygame.sprite.Sprite):
 
             # Update grid position based on final direction
             if self.dir_x != 0 or self.dir_y != 0:
-                # Update rotation visual before moving to the next cell
-                if self.dir_x == -1:
-                    self.rotate_image(180)
-                elif self.dir_x == 1:
-                    self.rotate_image(0)
-                elif self.dir_y == -1:
-                    self.rotate_image(90)
-                elif self.dir_y == 1:
-                    self.rotate_image(270)
-
                 self.grid_x += self.dir_x
                 self.grid_y += self.dir_y
-
+        # print(self.grid_x, self.grid_y)
         self.pixel_x += self.dir_x * self.speed
         self.pixel_y += self.dir_y * self.speed
+        return (self.dir_x, self.dir_y)
+
+
+class Ghost(pygame.sprite.Sprite):
+    def __init__(self, spawn, color, images, cell_x_size, cell_y_size):
+        super().__init__()
+        self.is_alive = True
+        self.is_edible = False
+        self.spawn = spawn  # [x, y]
+        self.color = color
+        self.personality = ""
+        self.position = spawn
+        self.images: list[pygame.image.Surface] = images
+        self.image: pygame.image.Surface = self.images[0]
+        self.rect = self.image.get_rect()
+        # Red (Blinky): Relentlessly chases Pac-Man directly.
+        # Pink (Pinky): Tries to position herself ahead of Pac-Man to trap him.
+        # Cyan/Light Blue (Inky): Has an unpredictable, flanking personality.
+        # Orange (Clyde): Wanders aimlessly or moves randomly.
+        # Dark blue: run away
+        self.movement = Movement(
+            cell_x_size,
+            cell_y_size,
+            spawn,
+            speed=4
+        )
+
+    def update(self, walls):
+        keys = pygame.key.get_pressed()
+        next_dir_x, next_dir_y = 0, 0
+        if keys[pygame.K_LEFT]:
+            next_dir_x, next_dir_y = -1, 0
+        elif keys[pygame.K_RIGHT]:
+            next_dir_x, next_dir_y = 1, 0
+        elif keys[pygame.K_UP]:
+            next_dir_x, next_dir_y = 0, -1
+        elif keys[pygame.K_DOWN]:
+            next_dir_x, next_dir_y = 0, 1
+        # print(next_dir_x)
+        # self.choose_direction(walls)
+        # next_dir_x = random.choice([-1, 0, 1])
+        # next_dir_y = random.choice([-1, 0, 1])
+        self.movement.update(walls, next_dir_x, next_dir_y)
+        self.rect.center = (
+            int(self.movement.pixel_x),
+            int(self.movement.pixel_y)
+        )
+        
+    # def choose_direction(self, walls):
+    #     self.movement.next_dir_x = dx
+    #     self.movement.next_dir_y = dy
+
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, spawn, cell_x_size, cell_y_size, lives=3):
+        super().__init__()
+        self.spawn = spawn  # PacMan class
+        self.cell_x_size = cell_x_size
+        self.cell_y_size = cell_y_size
+        self.lives = lives
+        self.orig_image = pygame.image.load("pacman3.png")
+        self.orig_image = pygame.transform.scale(
+            self.orig_image,
+            (min(int(cell_x_size), 32), min(int(cell_y_size), 32))
+        )
+        self.angle = 0
+        self.image = self.orig_image
+        self.rect = self.orig_image.get_rect()
+        self.pixel_x, self.pixel_y = spawn
         self.rect.center = (int(self.pixel_x), int(self.pixel_y))
+
+        self.grid_x = int(self.pixel_x // cell_x_size)
+        self.grid_y = int(self.pixel_y // cell_y_size)
+
+        self.next_dir_x = 0
+        self.next_dir_y = 0
+        self.speed = 5  # PacMan class
+        self.movement = Movement(
+            cell_x_size,
+            cell_y_size,
+            spawn,
+            speed=5
+        )
+
+    def rotate_image(self, angle):
+        center = self.rect.center
+        self.angle = angle
+        self.image = pygame.transform.rotate(
+            self.orig_image, self.angle
+        )
+        self.rect = self.image.get_rect(center=center)
+
+    def update(self, walls):
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT]:
+            self.next_dir_x, self.next_dir_y = -1, 0
+        elif keys[pygame.K_RIGHT]:
+            self.next_dir_x, self.next_dir_y = 1, 0
+        elif keys[pygame.K_UP]:
+            self.next_dir_x, self.next_dir_y = 0, -1
+        elif keys[pygame.K_DOWN]:
+            self.next_dir_x, self.next_dir_y = 0, 1
+
+        print(self.movement.update(walls, self.next_dir_x, self.next_dir_y))
+        self.rect.center = (
+            int(self.movement.pixel_x),
+            int(self.movement.pixel_y)
+        )
 
 
 class PacMan:
@@ -145,10 +197,22 @@ class PacMan:
         self.maze: MazeGenerator = maze
         self.config = config
         self.ghost_spawn = [
-            [0, 0],
-            [config["height"]-1, config["width"]-1],
-            [config["height"]-1, 0],
-            [0, config["width"]-1]
+            [
+                0 * cell_x_size + cell_x_size / 2,
+                0 * cell_y_size + cell_y_size / 2
+            ],
+            [
+                (config["height"]-1) * cell_x_size + cell_x_size / 2,
+                (config["width"]-1) * cell_y_size + cell_y_size / 2
+            ],
+            [
+                (config["height"]-1) * cell_x_size + cell_x_size / 2,
+                0 * cell_y_size + cell_y_size / 2
+            ],
+            [
+                0 * cell_x_size + cell_x_size / 2,
+                (config["width"]-1) * cell_y_size + cell_y_size / 2
+            ]
         ]
         self.ghosts: List[Ghost] = []
         self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size, cell_y_size=cell_y_size, lives=self.config["lives"])
@@ -158,10 +222,10 @@ class PacMan:
         self.points_per_ghost = config["points_per_ghost"]
         self.level_max_time = config["level_max_time"]
         self.image_list = image_list
-        print(self.image_list)
-        self.ghost_gen()
+        # print(self.image_list)
+        self.ghost_gen(cell_x_size, cell_y_size)
 
-    def ghost_gen(self):
+    def ghost_gen(self, cell_x_size, cell_y_size):
         color_list = ["red", "pink", "cyan", "orange"]
         for coords in self.ghost_spawn:
             color = random.choice(color_list)
@@ -177,17 +241,18 @@ class PacMan:
                         self.image_list["right_eyes"],
                         self.image_list["left_eyes"],
                         self.image_list["dead"]
-                    ]
+                    ],
+                    cell_x_size=cell_x_size,
+                    cell_y_size=cell_y_size
                 )
             )  # why always same color wtf?
-        print(self.ghosts[0].color, self.ghosts[1].color, self.ghosts[2].color, self.ghosts[3].color)
+        print(self.ghosts[0].color, self.ghosts[0].spawn, self.ghosts[0].position)
 
 
 def game(maze: MazeGenerator, config: dict):
     pygame.init()
     screen_x = 720
     cell_x_size = screen_x/maze._width
-    print(cell_x_size)
     screen_y = 720
     cell_y_size = screen_y/maze._height
     screen = pygame.display.set_mode((screen_x, screen_y))
@@ -209,7 +274,7 @@ def game(maze: MazeGenerator, config: dict):
                 cell_walls = "0"+cell_walls
             wall_line.append(cell_walls)
         walls.append(wall_line)
-    print(walls)
+    # print(walls)
     wall_color = (68, 136, 221)
     wall_width = 3
     wall_collision = []
@@ -278,9 +343,16 @@ def game(maze: MazeGenerator, config: dict):
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
     pagman = PacMan(maze_gen, config, spawn_x, spawn_y, image_list, cell_x_size, cell_y_size)
-    group: pygame.sprite.GroupSingle = pygame.sprite.GroupSingle()
-    player = pagman.player
-    group.add(player)
+    pacman_group: pygame.sprite.Group = pygame.sprite.Group()
+    ghost0_group: pygame.sprite.Group = pygame.sprite.Group()
+    ghost0_group.add(pagman.ghosts[0])
+    ghost1_group: pygame.sprite.Group = pygame.sprite.Group()
+    ghost1_group.add(pagman.ghosts[1])
+    ghost2_group: pygame.sprite.Group = pygame.sprite.Group()
+    ghost2_group.add(pagman.ghosts[2])
+    ghost3_group: pygame.sprite.Group = pygame.sprite.Group()
+    ghost3_group.add(pagman.ghosts[3])
+    pacman_group.add(pagman.player)
     while True:
         clock.tick(30)
         for event in pygame.event.get():
@@ -288,8 +360,16 @@ def game(maze: MazeGenerator, config: dict):
                 sys.exit()
         screen.fill(black)
         screen.blit(maze_surface, (0, 0))
-        group.update(walls)   # <- move all sprites using grid logically
-        group.draw(screen)
+        pacman_group.update(walls)   # <- move all sprites using grid logically
+        pacman_group.draw(screen)
+        ghost0_group.update(walls)
+        ghost0_group.draw(screen)
+        ghost1_group.update(walls)
+        ghost1_group.draw(screen)
+        ghost2_group.update(walls)
+        ghost2_group.draw(screen)
+        ghost3_group.update(walls)
+        ghost3_group.draw(screen)
         pygame.display.flip()
 
 

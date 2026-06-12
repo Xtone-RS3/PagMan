@@ -2,7 +2,7 @@
 	"highscore_filename":"HS.txt",
 	"level":[10, 11],
 	"width":15,
-	"height":16,
+	"height":15,
 	"lives":1,
 	"pacgum":42,
 	"points_per_pacgum":10,
