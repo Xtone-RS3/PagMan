@@ -34,22 +34,31 @@ class Ghost:
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, spawn, lives=3):
+    def __init__(self, spawn, cell_x_size, cell_y_size, lives=3):
         super().__init__()
         self.spawn = spawn  # PacMan class
-        self.position = spawn
+        self.cell_x_size = cell_x_size
+        self.cell_y_size = cell_y_size
         self.lives = lives
-        self.orig_image = pygame.image.load("PagMan.png")
-        self.orig_image = pygame.transform.scale(self.orig_image, (32, 32))
+        self.orig_image = pygame.image.load("pacman3.png")
+        self.orig_image = pygame.transform.scale(
+            self.orig_image,
+            (min(int(cell_x_size), 32), min(int(cell_y_size), 32))
+        )
         self.angle = 0
         self.image = self.orig_image
         self.rect = self.orig_image.get_rect()
-        self.rect.center = spawn
-        self.vx = 0
-        self.vy = 0
-        self.next_vx = 0
-        self.next_vy = 0
-        self.speed = 5  # PacMan class
+        self.pixel_x, self.pixel_y = spawn
+        self.rect.center = (int(self.pixel_x), int(self.pixel_y))
+
+        self.grid_x = int(self.pixel_x // cell_x_size)
+        self.grid_y = int(self.pixel_y // cell_y_size)
+
+        self.dir_x = 0
+        self.dir_y = 0
+        self.next_dir_x = 0
+        self.next_dir_y = 0
+        self.speed = 10  # PacMan class
 
     def rotate_image(self, angle):
         center = self.rect.center
@@ -59,69 +68,80 @@ class Player(pygame.sprite.Sprite):
         )
         self.rect = self.image.get_rect(center=center)
 
-    # vvvvvv MIGHT WANT TO MOVE ALL THIS MOVEMENT SHIT TO THE GAME'S CLASS SO GHOSTS HAVE ACCESS vvvvvvv
-    def overlaps_wall(self, walls):
-        inflated = self.rect.inflate(12, 13)  # this is THE crux, what this does is extend the collision so the walls get detected "sooner" (made up numbers)
-        for (x1, y1), (x2, y2) in walls:
-            if inflated.clipline(x1, y1, x2, y2):
-                return True
-        return False
-
-    def move_axis(self, dx, dy, walls) -> bool:  # checks movements per step, not per speed, VERY IMPORTANT
-        self.rect.x += dx
-        self.rect.y += dy
-        if self.overlaps_wall(walls):  # STEP BACK and find the LAST valid position
-            self.rect.x -= dx
-            self.rect.y -= dy
-            steps = max(abs(dx), abs(dy))
-            step_x = dx / steps if steps else 0  # binary search for the furthest we can go
-            step_y = dy / steps if steps else 0  # less math-y than what i like, but simpler to explain
-            for _ in range(steps):
-                self.rect.x += int(step_x)
-                self.rect.y += int(step_y)
-                if self.overlaps_wall(walls):
-                    self.rect.x -= int(step_x)
-                    self.rect.y -= int(step_y)
-                    break
-            return False  # hit a wall
-        return True  # moved freely
+    def can_move(self, walls, col, row, dx, dy):
+        if row < 0 or row >= len(walls) or col < 0 or col >= len(walls[0]):
+            return False
+        cell = walls[row][col]
+        # W -> cell[0], S -> cell[1], E -> cell[2], N -> cell[3]
+        if dx == -1 and cell[0] == "1":
+            return False  # West
+        if dy == 1 and cell[1] == "1":
+            return False  # South
+        if dx == 1 and cell[2] == "1":
+            return False  # East
+        if dy == -1 and cell[3] == "1":
+            return False  # North
+        return True
 
     def update(self, walls):
         keys = pygame.key.get_pressed()
-        desired_vx, desired_vy = self.next_vx, self.next_vy
 
         if keys[pygame.K_LEFT]:
-            desired_vx, desired_vy = -self.speed, 0
-            self.rotate_image(180)
+            self.next_dir_x, self.next_dir_y = -1, 0
         elif keys[pygame.K_RIGHT]:
-            desired_vx, desired_vy = self.speed, 0
-            self.rotate_image(0)
+            self.next_dir_x, self.next_dir_y = 1, 0
         elif keys[pygame.K_UP]:
-            desired_vx, desired_vy = 0, -self.speed
-            self.rotate_image(90)
+            self.next_dir_x, self.next_dir_y = 0, -1
         elif keys[pygame.K_DOWN]:
-            desired_vx, desired_vy = 0, self.speed
-            self.rotate_image(270)
+            self.next_dir_x, self.next_dir_y = 0, 1
 
-        if (desired_vx, desired_vy) != (self.vx, self.vy):  # same as before but smarter lol
-            self.next_vx, self.next_vy = desired_vx, desired_vy
+        # Calculate the center pixel of the current grid cell
+        target_pixel_x = self.grid_x * self.cell_x_size + self.cell_x_size / 2
+        target_pixel_y = self.grid_y * self.cell_y_size + self.cell_y_size / 2
 
-        if (self.next_vx, self.next_vy) != (self.vx, self.vy):
-            # Speculatively move to test
-            orig_x, orig_y = self.rect.x, self.rect.y
-            moved_freely = self.move_axis(self.next_vx, self.next_vy, walls)
-            self.rect.x, self.rect.y = orig_x, orig_y  # restore
-            if moved_freely:
-                self.vx, self.vy = self.next_vx, self.next_vy
+        # Check if we are at the center of the current cell
+        if (abs(self.pixel_x - target_pixel_x) <= self.speed and
+                abs(self.pixel_y - target_pixel_y) <= self.speed):
+            # Snap to center
+            self.pixel_x = target_pixel_x
+            self.pixel_y = target_pixel_y
 
-        # Actually move
-        moved_freely = self.move_axis(self.vx, self.vy, walls)
-        if not moved_freely:
-            self.vx, self.vy = 0, 0
+            # Can we move in the queued direction?
+            if (self.next_dir_x != 0 or self.next_dir_y != 0) and \
+                    self.can_move(
+                        walls, self.grid_x, self.grid_y,
+                        self.next_dir_x, self.next_dir_y
+                    ):
+                self.dir_x, self.dir_y = self.next_dir_x, self.next_dir_y
+
+            # If not, can we keep moving in current direction?
+            if not self.can_move(
+                walls, self.grid_x, self.grid_y, self.dir_x, self.dir_y
+            ):
+                self.dir_x, self.dir_y = 0, 0
+
+            # Update grid position based on final direction
+            if self.dir_x != 0 or self.dir_y != 0:
+                # Update rotation visual before moving to the next cell
+                if self.dir_x == -1:
+                    self.rotate_image(180)
+                elif self.dir_x == 1:
+                    self.rotate_image(0)
+                elif self.dir_y == -1:
+                    self.rotate_image(90)
+                elif self.dir_y == 1:
+                    self.rotate_image(270)
+
+                self.grid_x += self.dir_x
+                self.grid_y += self.dir_y
+
+        self.pixel_x += self.dir_x * self.speed
+        self.pixel_y += self.dir_y * self.speed
+        self.rect.center = (int(self.pixel_x), int(self.pixel_y))
 
 
 class PacMan:
-    def __init__(self, maze, config, spawn_x, spawn_y, image_list):
+    def __init__(self, maze, config, spawn_x, spawn_y, image_list, cell_x_size, cell_y_size):
         self.maze: MazeGenerator = maze
         self.config = config
         self.ghost_spawn = [
@@ -131,7 +151,7 @@ class PacMan:
             [0, config["width"]-1]
         ]
         self.ghosts: List[Ghost] = []
-        self.player = Player(spawn=(spawn_x, spawn_y), lives=self.config["lives"])
+        self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size, cell_y_size=cell_y_size, lives=self.config["lives"])
         self.pacgum = config["pacgum"]
         self.points_per_pacgum = config["points_per_pacgum"]
         self.points_per_super_pacgum = config["points_per_super_pacgum"]
@@ -257,7 +277,7 @@ def game(maze: MazeGenerator, config: dict):
     }
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
-    pagman = PacMan(maze_gen, config, spawn_x, spawn_y, image_list)
+    pagman = PacMan(maze_gen, config, spawn_x, spawn_y, image_list, cell_x_size, cell_y_size)
     group: pygame.sprite.GroupSingle = pygame.sprite.GroupSingle()
     player = pagman.player
     group.add(player)
@@ -268,7 +288,7 @@ def game(maze: MazeGenerator, config: dict):
                 sys.exit()
         screen.fill(black)
         screen.blit(maze_surface, (0, 0))
-        group.update(wall_collision)   # <- move all sprites
+        group.update(walls)   # <- move all sprites using grid logically
         group.draw(screen)
         pygame.display.flip()
 
