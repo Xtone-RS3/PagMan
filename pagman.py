@@ -4,6 +4,8 @@ import json
 import random
 from typing import List
 import pygame
+from ghosts import *
+# import ghosts
 
 # # Create a simple 20x20 maze
 # maze_gen = MazeGenerator(seed=10)
@@ -78,7 +80,6 @@ class Movement():
             if self.dir_x != 0 or self.dir_y != 0:
                 self.grid_x += self.dir_x
                 self.grid_y += self.dir_y
-        # print(self.grid_x, self.grid_y)
         self.pixel_x += self.dir_x * self.speed
         self.pixel_y += self.dir_y * self.speed
         return (self.dir_x, self.dir_y)
@@ -173,6 +174,13 @@ class Player(pygame.sprite.Sprite):
         )
         self.rect = self.image.get_rect(center=center)
 
+    @property
+    def grid_pos(self):
+        return (
+            int(self.movement.pixel_x // self.cell_x_size),
+            int(self.movement.pixel_y // self.cell_y_size)
+        )
+
     def update(self, walls):
         keys = pygame.key.get_pressed()
 
@@ -185,7 +193,7 @@ class Player(pygame.sprite.Sprite):
         elif keys[pygame.K_DOWN]:
             self.next_dir_x, self.next_dir_y = 0, 1
 
-        print(self.movement.update(walls, self.next_dir_x, self.next_dir_y))
+        self.movement.update(walls, self.next_dir_x, self.next_dir_y)
         self.rect.center = (
             int(self.movement.pixel_x),
             int(self.movement.pixel_y)
@@ -200,19 +208,19 @@ class PacMan:
             [
                 0 * cell_x_size + cell_x_size / 2,
                 0 * cell_y_size + cell_y_size / 2
-            ],
-            [
-                (config["height"]-1) * cell_x_size + cell_x_size / 2,
-                (config["width"]-1) * cell_y_size + cell_y_size / 2
-            ],
-            [
-                (config["height"]-1) * cell_x_size + cell_x_size / 2,
-                0 * cell_y_size + cell_y_size / 2
-            ],
-            [
-                0 * cell_x_size + cell_x_size / 2,
-                (config["width"]-1) * cell_y_size + cell_y_size / 2
             ]
+            # [
+            #     (config["height"]-1) * cell_x_size + cell_x_size / 2,
+            #     (config["width"]-1) * cell_y_size + cell_y_size / 2
+            # ],
+            # [
+            #     (config["height"]-1) * cell_x_size + cell_x_size / 2,
+            #     0 * cell_y_size + cell_y_size / 2
+            # ],
+            # [
+            #     0 * cell_x_size + cell_x_size / 2,
+            #     (config["width"]-1) * cell_y_size + cell_y_size / 2
+            # ]
         ]
         self.ghosts: List[Ghost] = []
         self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size, cell_y_size=cell_y_size, lives=self.config["lives"])
@@ -226,12 +234,13 @@ class PacMan:
         self.ghost_gen(cell_x_size, cell_y_size)
 
     def ghost_gen(self, cell_x_size, cell_y_size):
-        color_list = ["red", "pink", "cyan", "orange"]
+        color_list = ["red"]
+        # color_list = ["red", "pink", "cyan", "orange"]
         for coords in self.ghost_spawn:
             color = random.choice(color_list)
             color_list.remove(color)
             self.ghosts.append(
-                Ghost(
+                redGhost(
                     spawn=coords,
                     color=color,
                     images=[
@@ -346,12 +355,12 @@ def game(maze: MazeGenerator, config: dict):
     pacman_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost0_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost0_group.add(pagman.ghosts[0])
-    ghost1_group: pygame.sprite.Group = pygame.sprite.Group()
-    ghost1_group.add(pagman.ghosts[1])
-    ghost2_group: pygame.sprite.Group = pygame.sprite.Group()
-    ghost2_group.add(pagman.ghosts[2])
-    ghost3_group: pygame.sprite.Group = pygame.sprite.Group()
-    ghost3_group.add(pagman.ghosts[3])
+    # ghost1_group: pygame.sprite.Group = pygame.sprite.Group()
+    # ghost1_group.add(pagman.ghosts[1])
+    # ghost2_group: pygame.sprite.Group = pygame.sprite.Group()
+    # ghost2_group.add(pagman.ghosts[2])
+    # ghost3_group: pygame.sprite.Group = pygame.sprite.Group()
+    # ghost3_group.add(pagman.ghosts[3])
     pacman_group.add(pagman.player)
     while True:
         clock.tick(30)
@@ -362,14 +371,14 @@ def game(maze: MazeGenerator, config: dict):
         screen.blit(maze_surface, (0, 0))
         pacman_group.update(walls)   # <- move all sprites using grid logically
         pacman_group.draw(screen)
-        ghost0_group.update(walls)
+        ghost0_group.update(walls, pagman.player)
         ghost0_group.draw(screen)
-        ghost1_group.update(walls)
-        ghost1_group.draw(screen)
-        ghost2_group.update(walls)
-        ghost2_group.draw(screen)
-        ghost3_group.update(walls)
-        ghost3_group.draw(screen)
+        # ghost1_group.update(walls)
+        # ghost1_group.draw(screen)
+        # ghost2_group.update(walls)
+        # ghost2_group.draw(screen)
+        # ghost3_group.update(walls)
+        # ghost3_group.draw(screen)
         pygame.display.flip()
 
 
