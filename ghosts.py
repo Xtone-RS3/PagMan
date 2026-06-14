@@ -53,11 +53,42 @@ class redGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.death_routine(player)
-        # print(next_dir_x)
-        # self.choose_direction(walls)
-        # next_dir_x = random.choice([-1, 0, 1])
-        # next_dir_y = random.choice([-1, 0, 1])
-        self.movement.update(walls, 0, 1)
+        start = (self.movement.grid_x, self.movement.grid_y)
+        target = tuple(player.grid_pos)
+        queue = [start]
+        visited = {start}
+        origin = {start: None}
+        found = False
+        while queue:
+            current = queue.pop(0)
+            if current == target:
+                found = True
+                break
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                neighbor = (current[0] + dx, current[1] + dy)
+                if neighbor not in visited and self.movement.can_move(walls, current[0], current[1], dx, dy):
+                    visited.add(neighbor)
+                    queue.append(neighbor)
+                    origin[neighbor] = current
+        if not found:
+            path = []
+        else:
+            path = []
+            node = current
+            while node is not None:
+                path.append(node)
+                node = origin.get(node)
+            path.reverse()
+        if len(path) >= 2:
+            curr_cell = path[0]
+            next_cell = path[1]
+            next_dir_x = next_cell[0] - curr_cell[0]
+            next_dir_y = next_cell[1] - curr_cell[1]
+        else:
+            next_dir_x, next_dir_y = 0, 0
+
+        # Atualiza movimento e posição do sprite
+        self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
             int(self.movement.pixel_x),
             int(self.movement.pixel_y)
