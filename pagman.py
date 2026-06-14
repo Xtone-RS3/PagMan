@@ -217,6 +217,7 @@ class Player(pygame.sprite.Sprite):
         )
         if not moving:
             self.frame = 1
+            self.next_tick = current_time + self.interval
             self.update_image()
         if moving and current_time >= self.next_tick:
             self.next_tick += self.interval
