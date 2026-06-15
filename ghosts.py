@@ -42,7 +42,7 @@ class Ghost(pygame.sprite.Sprite, ABC):
     def respawn(self):
         pass
 
-    def bfs(self, walls, target, player: Player):
+    def bfs(self, walls, target):
         start = (self.movement.grid_x, self.movement.grid_y)
         queue = [start]
         visited = {start}
@@ -75,7 +75,7 @@ class Ghost(pygame.sprite.Sprite, ABC):
             next_dir_y = next_cell[1] - curr_cell[1]
         else:
             next_dir_x, next_dir_y = 0, 0
-        return next_dir_x, next_dir_y
+        return next_dir_x, next_dir_y, path
 
 
 class redGhost(Ghost):
@@ -90,7 +90,7 @@ class redGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.death_routine(player)
-        next_dir_x, next_dir_y = self.bfs(walls, player.grid_pos, player)
+        next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
 
         # Atualiza movimento e posição do sprite
         self.movement.update(walls, next_dir_x, next_dir_y)
@@ -159,8 +159,32 @@ class pinkGhost(Ghost):
                 tx = player.grid_pos[0] + i * player.movement.dir_x
                 ty = player.grid_pos[1] + i * player.movement.dir_y
                 if 0 <= tx < len(walls[0]) and 0 <= ty < len(walls):
-                    next_dir_x, next_dir_y = self.bfs(walls, (tx, ty), player)
+                    next_dir_x, next_dir_y, path = self.bfs(walls, (tx, ty))
                     break
+        self.movement.update(walls, next_dir_x, next_dir_y)
+        self.rect.center = (
+            int(self.movement.pixel_x),
+            int(self.movement.pixel_y)
+        )
+
+
+class cyanGhost(Ghost):
+    def __init__(self, spawn, color, images, cell_x_size, cell_y_size):
+        super().__init__(
+            spawn,
+            color,
+            images,
+            cell_x_size,
+            cell_y_size,
+        )
+
+    def update(self, walls, player: Player):
+        self.death_routine(player)
+        spawn_grid = (int(self.spawn[0] // self.movement.cell_x_size), int(self.spawn[1] // self.movement.cell_y_size))
+        next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
+        if len(path) <= 8:
+            next_dir_x, next_dir_y, path = self.bfs(walls, spawn_grid)
+
         self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
             int(self.movement.pixel_x),
