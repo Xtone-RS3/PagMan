@@ -31,7 +31,7 @@ class Ghost(pygame.sprite.Sprite, ABC):
         pass
 
     def death_routine(self, player: Player):
-        if player.grid_pos[1] == self.movement.grid_y and player.grid_pos[0] == self.movement.grid_x:
+        if self.rect.colliderect(player.rect):
             player.death()
 
     def escape(self, player: Player):
