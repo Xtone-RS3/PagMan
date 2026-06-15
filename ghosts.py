@@ -12,7 +12,13 @@ class Ghost(pygame.sprite.Sprite, ABC):
         self.spawn = spawn  # [x, y]
         self.color = color
         self.position = spawn
-        self.images: list[pygame.image.Surface] = images
+        a = int(cell_x_size * 2/3)
+        b = int(cell_y_size * 2/3)
+        size = min(a, b)
+        self.images = [
+            pygame.transform.scale(img, (size, size))
+            for img in images
+        ]
         self.image: pygame.image.Surface = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.center = (int(spawn[0]), int(spawn[1]))

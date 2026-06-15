@@ -93,10 +93,16 @@ class Player(pygame.sprite.Sprite):
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
         self.lives = lives
-        self.orig_image = [pygame.image.load("PagMan.png"), pygame.image.load("PauseMan.png")]
+        self.orig_image = [pygame.image.load("PagMan.png"),
+                           pygame.image.load("PauseMan.png")]
+        a = int(cell_x_size * 2/3)
+        b = int(cell_y_size * 2/3)
+        size = min(a, b)
         self.orig_image = [
-            pygame.transform.scale(self.orig_image[0], (min(int(cell_x_size), 32), min(int(cell_y_size), 32))),
-            pygame.transform.scale(self.orig_image[1], (min(int(cell_x_size), 32), min(int(cell_y_size), 32)))
+            pygame.transform.scale(self.orig_image[0],
+                                   (size, size)),
+            pygame.transform.scale(self.orig_image[1],
+                                   size=(size, size))
         ]
         self.frame: int = 0
         self.current = self.orig_image[self.frame]
@@ -124,13 +130,19 @@ class Player(pygame.sprite.Sprite):
     def update_image(self):  # copy this exact logic for ghost eyes
         center = self.rect.center
         image = self.orig_image[self.frame]
-        if self.movement.dir_x == -1 or (self.movement.dir_x == 0 and self.movement.dir_y == 0 and self.last_angle == -180):
+        if self.movement.dir_x == -1 or (self.movement.dir_x == 0 and
+                                         self.movement.dir_y == 0 and
+                                         self.last_angle == -180):
             self.last_angle = -180
             image = pygame.transform.flip(image, True, False)
-        elif self.movement.dir_y == -1 or (self.movement.dir_x == 0 and self.movement.dir_y == 0 and self.last_angle == 90):
+        elif self.movement.dir_y == -1 or (self.movement.dir_x == 0 and
+                                           self.movement.dir_y == 0 and
+                                           self.last_angle == 90):
             self.last_angle = 90
             image = pygame.transform.rotate(image, 90)
-        elif self.movement.dir_y == 1 or (self.movement.dir_x == 0 and self.movement.dir_y == 0 and self.last_angle == -90):
+        elif self.movement.dir_y == 1 or (self.movement.dir_x == 0 and
+                                          self.movement.dir_y == 0 and
+                                          self.last_angle == -90):
             self.last_angle = -90
             image = pygame.transform.rotate(image, -90)
         else:
@@ -180,7 +192,8 @@ class Player(pygame.sprite.Sprite):
 
 
 class PacMan:
-    def __init__(self, maze, config, spawn_x, spawn_y, image_list, cell_x_size, cell_y_size):
+    def __init__(self, maze, config, spawn_x, spawn_y, image_list, cell_x_size,
+                 cell_y_size):
         self.maze: MazeGenerator = maze
         self.config = config
         self.ghost_spawn = [
@@ -189,20 +202,22 @@ class PacMan:
                 0 * cell_y_size + cell_y_size / 2
             ],
             [
-                (config["width"]-1) * cell_x_size + cell_x_size / 2,
-                (config["height"]-1) * cell_y_size + cell_y_size / 2
+                (config["height"]-1) * cell_x_size + cell_x_size / 2,
+                (config["width"]-1) * cell_y_size + cell_y_size / 2
             ],
             [
                 0 * cell_x_size + cell_x_size / 2,
-                (config["height"]-1) * cell_y_size + cell_y_size / 2
+                (config["width"]-1) * cell_y_size + cell_y_size / 2
             ],
             [
-                (config["width"]-1) * cell_x_size + cell_x_size / 2,
+                (config["height"]-1) * cell_x_size + cell_x_size / 2,
                 0 * cell_y_size + cell_y_size / 2
             ]
         ]
         self.ghosts: List[Ghost] = []
-        self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size, cell_y_size=cell_y_size, lives=self.config["lives"])
+        self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size,
+                             cell_y_size=cell_y_size,
+                             lives=self.config["lives"])
         self.pacgum = config["pacgum"]
         self.points_per_pacgum = config["points_per_pacgum"]
         self.points_per_super_pacgum = config["points_per_super_pacgum"]
@@ -232,15 +247,14 @@ class PacMan:
                     cell_x_size=cell_x_size,
                     cell_y_size=cell_y_size
                 )
-            )  # why always same color wtf?
-        print(self.ghosts[0].color, self.ghosts[0].spawn, self.ghosts[0].position)
+            )
 
 
 def game(maze: MazeGenerator, config: dict):
     pygame.init()
-    screen_x = 720
+    screen_x = config["width"] * 48
     cell_x_size = screen_x/maze._width
-    screen_y = 720
+    screen_y = config["width"] * 48
     cell_y_size = screen_y/maze._height
     screen = pygame.display.set_mode((screen_x, screen_y))
     maze_surface = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
