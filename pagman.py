@@ -86,56 +86,6 @@ class Movement():
         return (self.dir_x, self.dir_y)
 
 
-class Ghost(pygame.sprite.Sprite):
-    def __init__(self, spawn, color, images, cell_x_size, cell_y_size):
-        super().__init__()
-        self.is_alive = True
-        self.is_edible = False
-        self.spawn = spawn  # [x, y]
-        self.color = color
-        self.personality = ""
-        self.position = spawn
-        self.images: list[pygame.image.Surface] = images
-        self.image: pygame.image.Surface = self.images[0]
-        self.rect = self.image.get_rect()
-        # Red (Blinky): Relentlessly chases Pac-Man directly.
-        # Pink (Pinky): Tries to position herself ahead of Pac-Man to trap him.
-        # Cyan/Light Blue (Inky): Has an unpredictable, flanking personality.
-        # Orange (Clyde): Wanders aimlessly or moves randomly.
-        # Dark blue: run away
-        self.movement = Movement(
-            cell_x_size,
-            cell_y_size,
-            spawn,
-            speed=4
-        )
-
-    def update(self, walls):
-        keys = pygame.key.get_pressed()
-        next_dir_x, next_dir_y = 0, 0
-        if keys[pygame.K_LEFT]:
-            next_dir_x, next_dir_y = -1, 0
-        elif keys[pygame.K_RIGHT]:
-            next_dir_x, next_dir_y = 1, 0
-        elif keys[pygame.K_UP]:
-            next_dir_x, next_dir_y = 0, -1
-        elif keys[pygame.K_DOWN]:
-            next_dir_x, next_dir_y = 0, 1
-        # print(next_dir_x)
-        # self.choose_direction(walls)
-        # next_dir_x = random.choice([-1, 0, 1])
-        # next_dir_y = random.choice([-1, 0, 1])
-        self.movement.update(walls, next_dir_x, next_dir_y)
-        self.rect.center = (
-            int(self.movement.pixel_x),
-            int(self.movement.pixel_y)
-        )
-        
-    # def choose_direction(self, walls):
-    #     self.movement.next_dir_x = dx
-    #     self.movement.next_dir_y = dy
-
-
 class Player(pygame.sprite.Sprite):
     def __init__(self, spawn, cell_x_size, cell_y_size, lives=3):
         super().__init__()
