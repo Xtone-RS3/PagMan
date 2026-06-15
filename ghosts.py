@@ -1,6 +1,7 @@
 import pygame
 from abc import ABC, abstractmethod
 from pagman import Movement, Player
+import random
 
 
 class Ghost(pygame.sprite.Sprite, ABC):
@@ -14,6 +15,7 @@ class Ghost(pygame.sprite.Sprite, ABC):
         self.images: list[pygame.image.Surface] = images
         self.image: pygame.image.Surface = self.images[0]
         self.rect = self.image.get_rect()
+        self.rect.center = (int(spawn[0]), int(spawn[1]))
         # Red (Blinky): Relentlessly chases Pac-Man directly.
         # Pink (Pinky): Tries to position herself ahead of Pac-Man to trap him.
         # Cyan/Light Blue (Inky): Has an unpredictable, flanking personality.
@@ -97,3 +99,67 @@ class redGhost(Ghost):
         # def choose_direction(self, walls):
         #     self.movement.next_dir_x = dx
         #     self.movement.next_dir_y = dy
+
+
+class orangeGhost(Ghost):
+    def __init__(self, spawn, color, images, cell_x_size, cell_y_size):
+        super().__init__(
+            spawn,
+            color,
+            images,
+            cell_x_size,
+            cell_y_size,
+        )
+
+    def update(self, walls, player: Player):
+        self.death_routine(player)
+        def find_number_neighbors(walls, cell):
+            count = 0
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                if self.movement.can_move(walls, cell[0], cell[1], dx, dy):
+                    count += 1
+            return count
+        next_dir_x = 0
+        next_dir_y = 0
+        if self.movement.dir_x == 0 and self.movement.dir_y == 0 and find_number_neighbors(walls, (self.movement.grid_x, self.movement.grid_y)) == 1:
+            # only one possible direction to move, so move in that direction
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                if self.movement.can_move(walls, self.movement.grid_x, self.movement.grid_y, dx, dy):
+                    next_dir_x = dx
+                    next_dir_y = dy
+                    break
+        else:
+            # pick a random direction that is not the opposite of the current direction
+            possible_dirs = []
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                if self.movement.can_move(walls, self.movement.grid_x, self.movement.grid_y, dx, dy):
+                    if (dx, dy) != (-self.movement.dir_x, -self.movement.dir_y):
+                        possible_dirs.append((dx, dy))
+            if possible_dirs:
+                next_dir_x, next_dir_y = random.choice(possible_dirs)
+
+        self.movement.update(walls, next_dir_x, next_dir_y)
+        self.rect.center = (
+            int(self.movement.pixel_x),
+            int(self.movement.pixel_y)
+        )
+
+        # def choose_direction(self, walls):
+        #     self.movement.next_dir_x = dx
+        #     self.movement.next_dir_y = dy
+
+
+class pinkGhost(Ghost):
+    def __init__(self, spawn, color, images, cell_x_size, cell_y_size):
+        super().__init__(
+            spawn,
+            color,
+            images,
+            cell_x_size,
+            cell_y_size,
+        )
+
+    def update(self, walls, player: Player):
+        self.death_routine(player)
+        # Implement Pink Ghost behavior here
+        pass
