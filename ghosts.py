@@ -90,7 +90,7 @@ class redGhost(Ghost):
             next_dir_x, next_dir_y = 0, 0
 
         # Atualiza movimento e posição do sprite
-        self.movement.update(walls, next_dir_x, next_dir_y)
+        self.movement.update(walls, next_dir_x, 0)
         self.rect.center = (
             int(self.movement.pixel_x),
             int(self.movement.pixel_y)
@@ -113,30 +113,17 @@ class orangeGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.death_routine(player)
-        def find_number_neighbors(walls, cell):
-            count = 0
-            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                if self.movement.can_move(walls, cell[0], cell[1], dx, dy):
-                    count += 1
-            return count
         next_dir_x = 0
         next_dir_y = 0
-        if self.movement.dir_x == 0 and self.movement.dir_y == 0 and find_number_neighbors(walls, (self.movement.grid_x, self.movement.grid_y)) == 1:
-            # only one possible direction to move, so move in that direction
-            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                if self.movement.can_move(walls, self.movement.grid_x, self.movement.grid_y, dx, dy):
-                    next_dir_x = dx
-                    next_dir_y = dy
-                    break
-        else:
-            # pick a random direction that is not the opposite of the current direction
-            possible_dirs = []
-            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                if self.movement.can_move(walls, self.movement.grid_x, self.movement.grid_y, dx, dy):
-                    if (dx, dy) != (-self.movement.dir_x, -self.movement.dir_y):
-                        possible_dirs.append((dx, dy))
-            if possible_dirs:
-                next_dir_x, next_dir_y = random.choice(possible_dirs)
+
+        # pick a random direction that is not the opposite of the current direction
+        possible_dirs = []
+        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            if self.movement.can_move(walls, self.movement.grid_x, self.movement.grid_y, dx, dy):
+                if (dx, dy) != (-self.movement.dir_x, -self.movement.dir_y):
+                    possible_dirs.append((dx, dy))
+        if possible_dirs:
+            next_dir_x, next_dir_y = random.choice(possible_dirs)
 
         self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
@@ -161,5 +148,4 @@ class pinkGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.death_routine(player)
-        # Implement Pink Ghost behavior here
-        pass
+        
