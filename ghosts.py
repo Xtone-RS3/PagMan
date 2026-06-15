@@ -42,21 +42,8 @@ class Ghost(pygame.sprite.Sprite, ABC):
     def respawn(self):
         pass
 
-
-class redGhost(Ghost):
-    def __init__(self, spawn, color, images, cell_x_size, cell_y_size):
-        super().__init__(
-            spawn,
-            color,
-            images,
-            cell_x_size,
-            cell_y_size,
-        )
-
-    def update(self, walls, player: Player):
-        self.death_routine(player)
+    def bfs(self, walls, target, player: Player):
         start = (self.movement.grid_x, self.movement.grid_y)
-        target = tuple(player.grid_pos)
         queue = [start]
         visited = {start}
         origin = {start: None}
@@ -88,9 +75,25 @@ class redGhost(Ghost):
             next_dir_y = next_cell[1] - curr_cell[1]
         else:
             next_dir_x, next_dir_y = 0, 0
+        return next_dir_x, next_dir_y
+
+
+class redGhost(Ghost):
+    def __init__(self, spawn, color, images, cell_x_size, cell_y_size):
+        super().__init__(
+            spawn,
+            color,
+            images,
+            cell_x_size,
+            cell_y_size,
+        )
+
+    def update(self, walls, player: Player):
+        self.death_routine(player)
+        next_dir_x, next_dir_y = self.bfs(walls, player.grid_pos, player)
 
         # Atualiza movimento e posição do sprite
-        self.movement.update(walls, next_dir_x, 0)
+        self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
             int(self.movement.pixel_x),
             int(self.movement.pixel_y)
@@ -148,4 +151,18 @@ class pinkGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.death_routine(player)
-        
+        if player.movement.dir_x == 0 and player.movement.dir_y == 0:
+            next_dir_x, next_dir_y = 0, 0
+        else:
+            next_dir_x, next_dir_y = 0, 0
+            for i in range(4, 0, -1):
+                tx = player.grid_pos[0] + i * player.movement.dir_x
+                ty = player.grid_pos[1] + i * player.movement.dir_y
+                if 0 <= tx < len(walls[0]) and 0 <= ty < len(walls):
+                    next_dir_x, next_dir_y = self.bfs(walls, (tx, ty), player)
+                    break
+        self.movement.update(walls, next_dir_x, next_dir_y)
+        self.rect.center = (
+            int(self.movement.pixel_x),
+            int(self.movement.pixel_y)
+        )
