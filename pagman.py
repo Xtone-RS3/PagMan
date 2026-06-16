@@ -23,10 +23,10 @@ from ghosts import *
 class Pacgum(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        # use gum1.png
         self.image = pygame.image.load("gum1.png")
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+        self.hitbox = self.rect.inflate(-28, -28)
 
 
 class Movement():
@@ -392,7 +392,7 @@ def game(maze: MazeGenerator, config: dict):
         screen.fill(black)
         screen.blit(maze_surface, (0, 0))
         pacgum_group.draw(screen)
-        eaten = pygame.sprite.spritecollide(pagman.player, pacgum_group, True)
+        eaten = pygame.sprite.spritecollide(pagman.player, pacgum_group, True, collided=lambda a, b: a.rect.colliderect(b.hitbox))
         if eaten:
             pagman.pacgum -= len(eaten)
             if pagman.pacgum <= 0:

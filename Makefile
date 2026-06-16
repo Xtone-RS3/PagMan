@@ -6,6 +6,7 @@ SHELL := /bin/bash
 
 UV := uv
 PY := $(UV) run python
+export PYGAME_HIDE_SUPPORT_PROMPT=1
 
 # Force uv to ALWAYS use .venv
 # 	@if [ -d "/sgoinfre" ]; then \
