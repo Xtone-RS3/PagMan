@@ -41,8 +41,8 @@ run: install
 
 lint:
 	@echo "Running flake8 + mypy..."
-	@$(UV) run flake8 src
-	@$(UV) run mypy src --ignore-missing-imports
+	@$(UV) run flake8 .
+	@$(UV) run mypy . --ignore-missing-imports
 
 
 # =========================

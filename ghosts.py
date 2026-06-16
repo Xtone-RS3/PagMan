@@ -1,6 +1,7 @@
 import pygame
 from abc import ABC, abstractmethod
-from pagman import Movement, Player
+from movement import Movement
+from player import Player
 import random
 
 
@@ -119,7 +120,7 @@ class redGhost(Ghost):
         next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
 
         # Atualiza movimento e posição do sprite
-        if len(path) < 15:
+        if len(path) < 8:
             self.movement.update(walls, next_dir_x, next_dir_y)
         else:
             next_dir_x = 0
@@ -139,7 +140,6 @@ class redGhost(Ghost):
             int(self.movement.pixel_x),
             int(self.movement.pixel_y)
         )
-
         # def choose_direction(self, walls):
         #     self.movement.next_dir_x = dx
         #     self.movement.next_dir_y = dy
@@ -194,16 +194,11 @@ class pinkGhost(Ghost):
     def update(self, walls, player: Player):
         self.eye_update()
         self.death_routine(player)
-        if player.movement.dir_x == 0 and player.movement.dir_y == 0:
-            next_dir_x, next_dir_y = 0, 0
-        else:
-            next_dir_x, next_dir_y = 0, 0
-            for i in range(4, 0, -1):
-                tx = player.grid_pos[0] + i * player.movement.dir_x
-                ty = player.grid_pos[1] + i * player.movement.dir_y
-                if 0 <= tx < len(walls[0]) and 0 <= ty < len(walls):
-                    next_dir_x, next_dir_y, path = self.bfs(walls, (tx, ty))
-                    break
+        spawn_grid = (int(self.spawn[0] // self.movement.cell_x_size), int(self.spawn[1] // self.movement.cell_y_size))
+        next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
+        if len(path) <= 8:
+            next_dir_x, next_dir_y, path = self.bfs(walls, spawn_grid)
+
         self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
             int(self.movement.pixel_x),
@@ -224,11 +219,16 @@ class cyanGhost(Ghost):
     def update(self, walls, player: Player):
         self.eye_update()
         self.death_routine(player)
-        spawn_grid = (int(self.spawn[0] // self.movement.cell_x_size), int(self.spawn[1] // self.movement.cell_y_size))
-        next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
-        if len(path) <= 8:
-            next_dir_x, next_dir_y, path = self.bfs(walls, spawn_grid)
-
+        if player.movement.dir_x == 0 and player.movement.dir_y == 0:
+            next_dir_x, next_dir_y = 0, 0
+        else:
+            next_dir_x, next_dir_y = 0, 0
+            for i in range(2, 0, -1):
+                tx = player.grid_pos[0] + i * player.movement.dir_x
+                ty = player.grid_pos[1] + i * player.movement.dir_y
+                if 0 <= tx < len(walls[0]) and 0 <= ty < len(walls):
+                    next_dir_x, next_dir_y, path = self.bfs(walls, (tx, ty))
+                    break
         self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
             int(self.movement.pixel_x),
