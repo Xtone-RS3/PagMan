@@ -19,9 +19,14 @@ class Ghost(pygame.sprite.Sprite, ABC):
             pygame.transform.scale(img, (size, size))
             for img in images
         ]
-        self.image: pygame.image.Surface = self.images[0]
+        self.body: pygame.image.Surface = self.images[0]
+        self.image = self.body.copy()
         self.rect = self.image.get_rect()
         self.rect.center = (int(spawn[0]), int(spawn[1]))
+        self.eyes = [
+            pygame.transform.scale(img, (size, size))
+            for img in images[1:5]  # down, up, right, left
+        ]
         # Red (Blinky): Relentlessly chases Pac-Man directly.
         # Pink (Pinky): Tries to position herself ahead of Pac-Man to trap him.
         # Cyan/Light Blue (Inky): Has an unpredictable, flanking personality.
@@ -33,10 +38,24 @@ class Ghost(pygame.sprite.Sprite, ABC):
             spawn,
             speed=4
         )
+        self.hitbox = self.rect.inflate(-28, -28)
 
     @abstractmethod
     def update(self, walls):
         pass
+
+    def eye_update(self):
+        self.image = self.body.copy()
+        if self.movement.dir_x == 1:
+            self.image.blit(self.eyes[2], (0, 0))
+        elif self.movement.dir_x == -1:
+            self.image.blit(self.eyes[3], (0, 0))
+        elif self.movement.dir_y == 1:
+            self.image.blit(self.eyes[0], (0, 0))
+        elif self.movement.dir_y == -1:
+            self.image.blit(self.eyes[1], (0, 0))
+        else:
+            self.image.blit(self.eyes[1], (0, 0))
 
     def death_routine(self, player: Player):
         if self.rect.colliderect(player.rect):
@@ -95,6 +114,7 @@ class redGhost(Ghost):
         )
 
     def update(self, walls, player: Player):
+        self.eye_update()
         self.death_routine(player)
         next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
 
@@ -136,6 +156,7 @@ class orangeGhost(Ghost):
         )
 
     def update(self, walls, player: Player):
+        self.eye_update()
         self.death_routine(player)
         next_dir_x = 0
         next_dir_y = 0
@@ -171,6 +192,7 @@ class pinkGhost(Ghost):
         )
 
     def update(self, walls, player: Player):
+        self.eye_update()
         self.death_routine(player)
         if player.movement.dir_x == 0 and player.movement.dir_y == 0:
             next_dir_x, next_dir_y = 0, 0
@@ -200,6 +222,7 @@ class cyanGhost(Ghost):
         )
 
     def update(self, walls, player: Player):
+        self.eye_update()
         self.death_routine(player)
         spawn_grid = (int(self.spawn[0] // self.movement.cell_x_size), int(self.spawn[1] // self.movement.cell_y_size))
         next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
