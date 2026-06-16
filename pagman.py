@@ -20,6 +20,15 @@ from ghosts import *
 # print(f"Shortest path length: {len(shortest_path)}")
 
 
+class Pacgum(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        # use gum1.png
+        self.image = pygame.image.load("gum1.png")
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
 class Movement():
     def __init__(self, cell_x_size, cell_y_size, spawn, speed):
         self.cell_x_size = cell_x_size  # needed?
@@ -89,7 +98,7 @@ class Movement():
 class Player(pygame.sprite.Sprite):
     def __init__(self, spawn, cell_x_size, cell_y_size, lives=3):
         super().__init__()
-        self.spawn = spawn  # PacMan class
+        self.spawn = (spawn)  # PacMan class
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
         self.lives = lives
@@ -323,6 +332,7 @@ def game(maze: MazeGenerator, config: dict):
                 pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
             curr_x += 1
         curr_y += 1
+
     # pygame.draw.lines(screen, wall_color, False, [(0, 0), (screen_x, screen_y), (500, 0), (0, 500)])
     #  ^ maybe try a big for loop like on amazing
     mid_col = (maze._width - 1) // 2
@@ -344,6 +354,25 @@ def game(maze: MazeGenerator, config: dict):
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
     pagman = PacMan(maze_gen, config, spawn_x, spawn_y, image_list, cell_x_size, cell_y_size)
+    pacgum_group = pygame.sprite.Group()
+    spwans = [(0, 0), (0, maze._height-1),
+              (maze._width-1, 0), (maze._width-1, maze._height-1),
+              (pagman.player.grid_x, pagman.player.grid_y)]
+    l_pacgum = []
+    for row in range(maze._height):
+        for col in range(maze._width):
+            gum_spwan = maze.maze[row][col]
+            # cant spwan on walls and where the ghosts spawn and where the player spawns 
+            if gum_spwan != 15 and (col, row) not in spwans:
+                cx = col * cell_x_size + cell_x_size / 2
+                cy = row * cell_y_size + cell_y_size / 2
+                l_pacgum.append((cx, cy))
+    for i in range(config["pacgum"]):
+        if not l_pacgum:
+            break
+        spawn = random.choice(l_pacgum)
+        l_pacgum.remove(spawn)
+        pacgum_group.add(Pacgum(*spawn))
     pacman_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost0_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost0_group.add(pagman.ghosts[0])
@@ -362,6 +391,13 @@ def game(maze: MazeGenerator, config: dict):
                 sys.exit()
         screen.fill(black)
         screen.blit(maze_surface, (0, 0))
+        pacgum_group.draw(screen)
+        eaten = pygame.sprite.spritecollide(pagman.player, pacgum_group, True)
+        if eaten:
+            pagman.pacgum -= len(eaten)
+            if pagman.pacgum <= 0:
+                print("You win!")
+                sys.exit()
         pacman_group.update(walls, current_time)   # <- move all sprites using grid logically
         pacman_group.draw(screen)
         ghost0_group.update(walls, pagman.player)
