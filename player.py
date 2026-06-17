@@ -105,8 +105,13 @@ class Player(pygame.sprite.Sprite):
             self.update_image()
 
     def death(self):
-        sys.exit()
-        # raise ValueError("Game Over")
+        self.lives -= 1
+        # death anim
+        if self.lives == 0:
+            sys.exit()  # this should only end the game and boot the player to scoreboard
+        else:
+            # respawn
+            pass
 
     def score_gain(self, score_gained):
         self.score += score_gained

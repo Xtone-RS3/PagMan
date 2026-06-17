@@ -6,6 +6,7 @@ from typing import List
 import pygame
 from ghosts import redGhost, orangeGhost, pinkGhost, cyanGhost, Ghost
 from player import Player
+from pygame._sdl2.video import Window
 
 
 class Pacgum(pygame.sprite.Sprite):
@@ -23,7 +24,7 @@ class superPacgum(pygame.sprite.Sprite):
         self.image = pygame.image.load("gum3.png")
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.hitbox = self.rect.inflate(-10, -210)
+        self.hitbox = self.rect.inflate(-10, -10)
 
 
 class PacMan:
@@ -85,13 +86,56 @@ class PacMan:
             )
 
 
+def draw_ui(screen, score, lives, time_left):
+    font = pygame.font.SysFont(None, 40)
+    # UI background
+    pygame.draw.rect(screen, (20, 20, 20),
+                     (0, 0, 720+250, 720))
+
+    # Separator line
+    pygame.draw.line(screen, (255, 255, 0),
+                     (0, 720+250),
+                     (720, 720+250), 3)
+
+    score_text = font.render(
+        f"Score: {score}", True, (255, 255, 255)
+    )
+
+    lives_text = font.render(
+        "Lives:", True, (255, 255, 255)
+    )
+
+    life_icon = pygame.image.load("PagMan.png")
+    for i in range(lives):
+        screen.blit(life_icon, (829 + i * 40, 50))
+
+    minutes = time_left // 60
+    seconds = time_left % 60
+
+    timer_text = font.render(
+        f"Time: {minutes:02}:{seconds:02}",
+        True,
+        (255, 255, 255)
+    )
+
+    screen.blit(score_text, (740, 10))
+    screen.blit(lives_text, (740, 50))
+    screen.blit(timer_text, (740, 90))
+
+
 def game(maze: MazeGenerator, config: dict):
     pygame.init()
     screen_x = config["width"] * 48
     cell_x_size = screen_x/maze._width
     screen_y = config["width"] * 48
     cell_y_size = screen_y/maze._height
-    screen = pygame.display.set_mode((screen_x, screen_y))
+    display_info = pygame.display.Info()
+    window_x = 0
+    print(display_info.current_h, screen_y)
+    if display_info.current_w > screen_x:
+        window_x = screen_x + 250
+    screen = pygame.display.set_mode((window_x, screen_y))
+    pygame.display.set_caption("Pac-Man")
     maze_surface = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
     maze_surface.fill((0, 0, 0, 0))
     #  for the window size just do x*height y*width
@@ -204,8 +248,8 @@ def game(maze: MazeGenerator, config: dict):
         pacgum_group.add(Pacgum(*spawn))
     # i want lile x = 0 and y = middle of size, then x = max and y = middle, then y = 0 and x = middle, then y = max and x = middle, then the player spawn, then just randomize the rest of the spawns for the pacgum
     super_spawns = []
-    super_spawns.append((0, cell_y_size * mid_row + cell_y_size / 2))
-    super_spawns.append((cell_x_size * mid_col + cell_x_size / 2, 0))
+    super_spawns.append((cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2))
+    super_spawns.append((cell_x_size * mid_col + cell_x_size / 2, cell_y_size / 2))
     super_spawns.append((cell_x_size * mid_col + cell_x_size / 2, cell_y_size * (maze._height - 1) + cell_y_size / 2))
     super_spawns.append((cell_x_size * (maze._width - 1) + cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2))
     for spawn in super_spawns:
@@ -230,12 +274,22 @@ def game(maze: MazeGenerator, config: dict):
             if event.type == pygame.QUIT:
                 sys.exit()
         screen.fill(black)
+        # extra_screen.fill(black)
+        elapsed = (pygame.time.get_ticks() - 0) // 1000
+        time_left = max(0, config["level_max_time"] - elapsed)
+        draw_ui(screen, pagman.player.score, pagman.player.lives, time_left)
         screen.blit(maze_surface, (0, 0))
+        # extra_screen.blit()
         pacgum_group.draw(screen)
         super_pacgum_group.draw(screen)
         eaten = pygame.sprite.spritecollide(pagman.player, pacgum_group, True, collided=lambda a, b: a.rect.colliderect(b.hitbox))
+        if pygame.sprite.spritecollide(pagman.player, super_pacgum_group, True, collided=lambda a, b: a.rect.colliderect(b.hitbox)):
+            pagman.player.score_gain(config["points_per_super_pacgum"])
+            for ghost in pagman.ghosts:
+                ghost.is_edible = True
         if eaten:
             pagman.pacgum -= len(eaten)
+            pagman.player.score_gain(config["points_per_pacgum"])
             if pagman.pacgum <= 0:
                 print("You win!")
                 sys.exit()
