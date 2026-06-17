@@ -17,6 +17,15 @@ class Pacgum(pygame.sprite.Sprite):
         self.hitbox = self.rect.inflate(-28, -28)
 
 
+class superPacgum(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load("gum3.png")
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.hitbox = self.rect.inflate(-10, -210)
+
+
 class PacMan:
     def __init__(self, maze, config, spawn_x, spawn_y, image_list, cell_x_size,
                  cell_y_size):
@@ -172,6 +181,7 @@ def game(maze: MazeGenerator, config: dict):
         image_list[key] = pygame.image.load(file)
     pagman = PacMan(maze_gen, config, spawn_x, spawn_y, image_list, cell_x_size, cell_y_size)
     pacgum_group = pygame.sprite.Group()
+    super_pacgum_group = pygame.sprite.Group()
     spwans = [(0, 0), (0, maze._height-1),
               (maze._width-1, 0), (maze._width-1, maze._height-1),
               (pagman.player.grid_x, pagman.player.grid_y)]
@@ -184,7 +194,7 @@ def game(maze: MazeGenerator, config: dict):
                 cx = col * cell_x_size + cell_x_size / 2
                 cy = row * cell_y_size + cell_y_size / 2
                 l_pacgum.append((cx, cy))
-    if len(l_pacgum) != config["pacgum"]:
+    if len(l_pacgum) < config["pacgum"]:
         print(f"Warning: Requested {config['pacgum']} pacgums, but only {len(l_pacgum)} valid spawn locations available.")
     for i in range(config["pacgum"]):
         if not l_pacgum:
@@ -192,6 +202,17 @@ def game(maze: MazeGenerator, config: dict):
         spawn = random.choice(l_pacgum)
         l_pacgum.remove(spawn)
         pacgum_group.add(Pacgum(*spawn))
+    # i want lile x = 0 and y = middle of size, then x = max and y = middle, then y = 0 and x = middle, then y = max and x = middle, then the player spawn, then just randomize the rest of the spawns for the pacgum
+    super_spawns = []
+    super_spawns.append((0, cell_y_size * mid_row + cell_y_size / 2))
+    super_spawns.append((cell_x_size * mid_col + cell_x_size / 2, 0))
+    super_spawns.append((cell_x_size * mid_col + cell_x_size / 2, cell_y_size * (maze._height - 1) + cell_y_size / 2))
+    super_spawns.append((cell_x_size * (maze._width - 1) + cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2))
+    for spawn in super_spawns:
+        if spawn in spwans:
+            continue
+        super_pacgum_group.add(superPacgum(*spawn))
+
     pacman_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost0_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost0_group.add(pagman.ghosts[0])
@@ -211,6 +232,7 @@ def game(maze: MazeGenerator, config: dict):
         screen.fill(black)
         screen.blit(maze_surface, (0, 0))
         pacgum_group.draw(screen)
+        super_pacgum_group.draw(screen)
         eaten = pygame.sprite.spritecollide(pagman.player, pacgum_group, True, collided=lambda a, b: a.rect.colliderect(b.hitbox))
         if eaten:
             pagman.pacgum -= len(eaten)
@@ -245,6 +267,5 @@ if __name__ == "__main__":
     # hex_lists = [[hex(x) for x in inner] for inner in maze_gen.maze]
     # hex_lists2 = [[x.replace("0x", "") for x in hex] for hex in hex_lists]
     # print(hex_lists2)
-
     # print(config)
     game(maze_gen, config)

@@ -9,10 +9,12 @@ class Ghost(pygame.sprite.Sprite, ABC):
     def __init__(self, spawn, color, images, cell_x_size, cell_y_size):
         super().__init__()
         self.is_alive = True
-        self.is_edible = False
+        self.is_edible = True
         self.spawn = spawn  # [x, y]
         self.color = color
         self.position = spawn
+        self.base_speed = 4
+        self.speed = self.base_speed
         a = int(cell_x_size * 2/3)
         b = int(cell_y_size * 2/3)
         size = min(a, b)
@@ -25,7 +27,7 @@ class Ghost(pygame.sprite.Sprite, ABC):
         self.rect = self.image.get_rect()
         self.rect.center = (int(spawn[0]), int(spawn[1]))
         self.eyes = [
-            pygame.transform.scale(img, (size, size))
+            img  # pygame.transform.scale(img, (size, size))
             for img in images[1:5]  # down, up, right, left
         ]
         # Red (Blinky): Relentlessly chases Pac-Man directly.
@@ -37,36 +39,66 @@ class Ghost(pygame.sprite.Sprite, ABC):
             cell_x_size,
             cell_y_size,
             spawn,
-            speed=4
+            speed=self.speed
         )
         self.hitbox = self.rect.inflate(-28, -28)
 
     @abstractmethod
-    def update(self, walls):
+    def update(self, walls, player: Player):
         pass
 
     def eye_update(self):
-        self.image = self.body.copy()
-        if self.movement.dir_x == 1:
-            self.image.blit(self.eyes[2], (0, 0))
-        elif self.movement.dir_x == -1:
-            self.image.blit(self.eyes[3], (0, 0))
-        elif self.movement.dir_y == 1:
-            self.image.blit(self.eyes[0], (0, 0))
-        elif self.movement.dir_y == -1:
-            self.image.blit(self.eyes[1], (0, 0))
-        else:
-            self.image.blit(self.eyes[1], (0, 0))
+        if self.is_alive is True and self.is_edible is False:
+            self.image = self.body.copy()
+            if self.movement.dir_x == 1:
+                self.image.blit(self.eyes[2], (0, 0))
+            elif self.movement.dir_x == -1:
+                self.image.blit(self.eyes[3], (0, 0))
+            elif self.movement.dir_y == 1:
+                self.image.blit(self.eyes[0], (0, 0))
+            elif self.movement.dir_y == -1:
+                self.image.blit(self.eyes[1], (0, 0))
+            else:
+                self.image.blit(self.eyes[1], (0, 0))
+        elif self.is_alive is True and self.is_edible is True:
+            self.image = self.images[5]
+        elif self.is_alive is False:
+            if self.movement.dir_x == 1:
+                self.image = self.eyes[2]
+            elif self.movement.dir_x == -1:
+                self.image = self.eyes[3]
+            elif self.movement.dir_y == 1:
+                self.image = self.eyes[0]
+            elif self.movement.dir_y == -1:
+                self.image = self.eyes[1]
+            else:
+                self.image = self.eyes[1]
 
     def death_routine(self, player: Player):
         if self.rect.colliderect(player.rect):
             player.death()
 
-    def escape(self, player: Player):
-        pass
+    def escape(self, walls, player: Player):
+        # print(self.bfs(walls, player))
+        if self.rect.colliderect(player.rect):
+            player.score_gain(100)
+            self.is_edible = False
+            self.is_alive = False
+            self.speed = self.base_speed/2
+            self.respawn(walls)
 
-    def respawn(self):
-        pass
+    def respawn(self, walls):
+        self.speed = self.base_speed*2
+        next_dir_x, next_dir_y, path = self.bfs(walls, self.spawn)
+        self.movement.update(walls, next_dir_x, next_dir_y)
+        self.rect.center = (
+            int(self.movement.pixel_x),
+            int(self.movement.pixel_y)
+        )
+        if (self.movement.pixel_x, self.movement.pixel_y) == (self.spawn[0], self.spawn[1]):
+            self.is_alive = True
+            self.is_edible = False
+            print("stuck")
 
     def bfs(self, walls, target):
         start = (self.movement.grid_x, self.movement.grid_y)
@@ -116,30 +148,35 @@ class redGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.eye_update()
-        self.death_routine(player)
+        if self.is_edible is False and self.is_alive is True:
+            print("killed by red")
+            self.death_routine(player)
+        else:
+            self.escape(walls, player)
         next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
 
-        # Atualiza movimento e posição do sprite
-        if len(path) < 8:
-            self.movement.update(walls, next_dir_x, next_dir_y)
-        else:
-            next_dir_x = 0
-            next_dir_y = 0
+        if self.is_edible is False and self.is_alive is True:
+            # Atualiza movimento e posição do sprite
+            if len(path) < 8:
+                self.movement.update(walls, next_dir_x, next_dir_y)
+            else:
+                next_dir_x = 0
+                next_dir_y = 0
 
-            # pick a random direction that is not the opposite of the current direction
-            possible_dirs = []
-            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                if self.movement.can_move(walls, self.movement.grid_x, self.movement.grid_y, dx, dy):
-                    if (dx, dy) != (-self.movement.dir_x, -self.movement.dir_y):
-                        possible_dirs.append((dx, dy))
-            if possible_dirs:
-                next_dir_x, next_dir_y = random.choice(possible_dirs)
+                # pick a random direction that is not the opposite of the current direction
+                possible_dirs = []
+                for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                    if self.movement.can_move(walls, self.movement.grid_x, self.movement.grid_y, dx, dy):
+                        if (dx, dy) != (-self.movement.dir_x, -self.movement.dir_y):
+                            possible_dirs.append((dx, dy))
+                if possible_dirs:
+                    next_dir_x, next_dir_y = random.choice(possible_dirs)
 
-            self.movement.update(walls, next_dir_x, next_dir_y)
-        self.rect.center = (
-            int(self.movement.pixel_x),
-            int(self.movement.pixel_y)
-        )
+                self.movement.update(walls, next_dir_x, next_dir_y)
+            self.rect.center = (
+                int(self.movement.pixel_x),
+                int(self.movement.pixel_y)
+            )
         # def choose_direction(self, walls):
         #     self.movement.next_dir_x = dx
         #     self.movement.next_dir_y = dy
@@ -157,7 +194,11 @@ class orangeGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.eye_update()
-        self.death_routine(player)
+        if self.is_edible is False and self.is_alive is True:
+            print("killed by orange")
+            self.death_routine(player)
+        else:
+            self.escape(walls, player)
         next_dir_x = 0
         next_dir_y = 0
 
@@ -193,7 +234,11 @@ class pinkGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.eye_update()
-        self.death_routine(player)
+        if self.is_edible is False and self.is_alive is True:
+            print("killed by pink")
+            self.death_routine(player)
+        else:
+            self.escape(walls, player)
         spawn_grid = (int(self.spawn[0] // self.movement.cell_x_size), int(self.spawn[1] // self.movement.cell_y_size))
         next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
         if len(path) <= 8:
@@ -218,7 +263,11 @@ class cyanGhost(Ghost):
 
     def update(self, walls, player: Player):
         self.eye_update()
-        self.death_routine(player)
+        if self.is_edible is False and self.is_alive is True:
+            print("killed by cyan")
+            self.death_routine(player)
+        else:
+            self.escape(walls, player)
         if player.movement.dir_x == 0 and player.movement.dir_y == 0:
             next_dir_x, next_dir_y = 0, 0
         else:
