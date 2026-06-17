@@ -10,6 +10,7 @@ class Player(pygame.sprite.Sprite):
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
         self.lives = lives
+        self.score = 0
         self.orig_image = [pygame.image.load("PagMan.png"),
                            pygame.image.load("PauseMan.png")]
         a = int(cell_x_size * 2/3)
@@ -106,3 +107,6 @@ class Player(pygame.sprite.Sprite):
     def death(self):
         sys.exit()
         # raise ValueError("Game Over")
+
+    def score_gain(self, score_gained):
+        self.score += score_gained
