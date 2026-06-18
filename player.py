@@ -1,10 +1,18 @@
+from typing import Any
 import pygame
 import sys
 from movement import Movement
+from pygame.rect import Rect
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, spawn, cell_x_size, cell_y_size, lives=3):
+    def __init__(
+            self,
+            spawn: tuple[float, float],
+            cell_x_size: float,
+            cell_y_size: float,
+            lives: int = 3
+    ):
         super().__init__()
         self.spawn = (spawn)  # PacMan class
         self.cell_x_size = cell_x_size
@@ -26,7 +34,7 @@ class Player(pygame.sprite.Sprite):
         self.current = self.orig_image[self.frame]
         self.last_angle = 0
         self.image = self.orig_image[self.frame]
-        self.rect = self.orig_image[0].get_rect()
+        self.rect: Rect = self.orig_image[0].get_rect()
         self.pixel_x, self.pixel_y = spawn
         self.rect.center = (int(self.pixel_x), int(self.pixel_y))
 
@@ -45,7 +53,7 @@ class Player(pygame.sprite.Sprite):
         self.interval = 200
         self.next_tick = pygame.time.get_ticks() + self.interval
 
-    def update_image(self):  # copy this exact logic for ghost eyes
+    def update_image(self) -> None:  # copy this exact logic for ghost eyes
         center = self.rect.center
         image = self.orig_image[self.frame]
         if self.movement.dir_x == -1 or (self.movement.dir_x == 0 and
@@ -69,13 +77,13 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=center)
 
     @property
-    def grid_pos(self):
+    def grid_pos(self) -> tuple[int, int]:
         return (
             int(self.movement.pixel_x // self.cell_x_size),
             int(self.movement.pixel_y // self.cell_y_size)
         )
 
-    def update(self, walls, current_time):
+    def update(self, walls: Any, current_time: int) -> None:
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
@@ -104,14 +112,15 @@ class Player(pygame.sprite.Sprite):
             self.frame = (self.frame + 1) % len(self.orig_image)
             self.update_image()
 
-    def death(self):
+    def death(self) -> None:
         self.lives -= 1
         # death anim
         if self.lives == 0:
-            sys.exit()  # this should only end the game and boot the player to scoreboard
+            # this should only end the game and boot the player to scoreboard
+            sys.exit()
         else:
             # respawn
             pass
 
-    def score_gain(self, score_gained):
+    def score_gain(self, score_gained: int) -> None:
         self.score += score_gained

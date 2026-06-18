@@ -2,54 +2,64 @@ from mazegenerator import MazeGenerator
 import sys
 import json
 import random
-from typing import List
+from typing import Any, Dict, List
 import pygame
 from ghosts import redGhost, orangeGhost, pinkGhost, cyanGhost, Ghost
 from player import Player
-from pygame._sdl2.video import Window
+from pygame.surface import Surface
+from pygame.rect import Rect
 
 
 class Pacgum(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float):
         super().__init__()
         self.image = pygame.image.load("gum1.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.hitbox = self.rect.inflate(-28, -28)
+        self.rect.center = (int(x), int(y))
+        self.hitbox = self.rect.inflate(-28, -28)  # TODO divide cell size by a factor, 48 / x = 28
 
 
 class superPacgum(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float):
         super().__init__()
         self.image = pygame.image.load("gum3.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.hitbox = self.rect.inflate(-10, -10)
+        self.rect.center = (int(x), int(y))
+        self.hitbox = self.rect.inflate(-10, -10)  # TODO
 
 
 class PacMan:
-    def __init__(self, maze, config, spawn_x, spawn_y, image_list, cell_x_size,
-                 cell_y_size):
+    def __init__(
+            self,
+            maze: MazeGenerator,
+            config: Dict[Any, Any],
+            spawn_x: float,
+            spawn_y: float,
+            image_list: Dict[Any, Any],
+            cell_x_size: float,
+            cell_y_size: float
+    ):
         self.maze: MazeGenerator = maze
         self.config = config
         self.ghost_spawn = [
-            [
+            (
                 0 * cell_x_size + cell_x_size / 2,
                 0 * cell_y_size + cell_y_size / 2
-            ],
-            [
-                (config["height"]-1) * cell_x_size + cell_x_size / 2,
-                (config["width"]-1) * cell_y_size + cell_y_size / 2
-            ],
-            [
+            ),
+            (
+                (config["width"]-1) * cell_x_size + cell_x_size / 2,
+                (config["height"]-1) * cell_y_size + cell_y_size / 2
+            ),
+            (
                 0 * cell_x_size + cell_x_size / 2,
-                (config["width"]-1) * cell_y_size + cell_y_size / 2
-            ],
-            [
-                (config["height"]-1) * cell_x_size + cell_x_size / 2,
+                (config["height"]-1) * cell_y_size + cell_y_size / 2
+            ),
+            (
+                (config["width"]-1) * cell_x_size + cell_x_size / 2,
                 0 * cell_y_size + cell_y_size / 2
-            ]
+            )
         ]
+        print(self.ghost_spawn)
         self.ghosts: List[Ghost] = []
         self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size,
                              cell_y_size=cell_y_size,
@@ -60,10 +70,9 @@ class PacMan:
         self.points_per_ghost = config["points_per_ghost"]
         self.level_max_time = config["level_max_time"]
         self.image_list = image_list
-        # print(self.image_list)
         self.ghost_gen(cell_x_size, cell_y_size)
 
-    def ghost_gen(self, cell_x_size, cell_y_size):
+    def ghost_gen(self, cell_x_size: float, cell_y_size: float) -> None:
         color_class = [redGhost, orangeGhost, pinkGhost, cyanGhost]
         color_list = ["red", "orange", "pink", "cyan"]
         for i, coords in enumerate(self.ghost_spawn):
@@ -86,16 +95,18 @@ class PacMan:
             )
 
 
-def draw_ui(screen, score, lives, time_left):
-    font = pygame.font.SysFont(None, 40)
+def draw_ui(
+        screen: Surface,
+        score: int,
+        lives: int,
+        time_left: int,
+        screen_x: int,
+        screen_y: int
+) -> None:
+    font = pygame.font.SysFont("Serif", 40, True)
     # UI background
-    pygame.draw.rect(screen, (20, 20, 20),
-                     (0, 0, 720+250, 720))
-
-    # Separator line
-    pygame.draw.line(screen, (255, 255, 0),
-                     (0, 720+250),
-                     (720, 720+250), 3)
+    pygame.draw.rect(screen, (0, 0, 0),
+                     (screen_x, 0, screen_x+250, screen_x))
 
     score_text = font.render(
         f"Score: {score}", True, (255, 255, 255)
@@ -106,8 +117,13 @@ def draw_ui(screen, score, lives, time_left):
     )
 
     life_icon = pygame.image.load("PagMan.png")
-    for i in range(lives):
-        screen.blit(life_icon, (829 + i * 40, 50))
+    if lives <= 3 and lives > 0:
+        for i in range(lives):
+            screen.blit(life_icon, (screen_x + 109 + i * 40, 50))
+    elif lives == -1:
+        lives_text = font.render("Lives: ∞", True, (255, 255, 255))
+    else:
+        lives_text = font.render(f"Lives: {lives}", True, (255, 255, 255))
 
     minutes = time_left // 60
     seconds = time_left % 60
@@ -118,32 +134,31 @@ def draw_ui(screen, score, lives, time_left):
         (255, 255, 255)
     )
 
-    screen.blit(score_text, (740, 10))
-    screen.blit(lives_text, (740, 50))
-    screen.blit(timer_text, (740, 90))
+    screen.blit(score_text, (screen_x + 20, 10))
+    screen.blit(lives_text, (screen_x + 20, 50))
+    screen.blit(timer_text, (screen_x + 20, 90))
 
 
-def game(maze: MazeGenerator, config: dict):
+def game(maze: MazeGenerator, config: dict) -> None:
     pygame.init()
-    screen_x = config["width"] * 48
+    screen_x = 720
     cell_x_size = screen_x/maze._width
-    screen_y = config["width"] * 48
+    screen_y = 720
     cell_y_size = screen_y/maze._height
+    cell_x_size, cell_y_size = \
+        min(cell_x_size, cell_y_size), min(cell_x_size, cell_y_size)
     display_info = pygame.display.Info()
     window_x = 0
-    print(display_info.current_h, screen_y)
     if display_info.current_w > screen_x:
         window_x = screen_x + 250
     screen = pygame.display.set_mode((window_x, screen_y))
     pygame.display.set_caption("Pac-Man")
-    maze_surface = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
+    maze_surface: pygame.Surface = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
     maze_surface.fill((0, 0, 0, 0))
     #  for the window size just do x*height y*width
     clock = pygame.time.Clock()
     clock.tick(30)
-    black = 10, 10, 26  # 0, 0, 0 <- this is pure black
-    #  ^ this is the background, we need to on top of that draw our maze using pygame.draw.line() like this vvv
-    # print(maze.maze)
+    black = 10, 10, 26
     #  West, South, East, North
     walls: List[List[str]] = []
     for line in maze.maze:
@@ -154,57 +169,92 @@ def game(maze: MazeGenerator, config: dict):
                 cell_walls = "0"+cell_walls
             wall_line.append(cell_walls)
         walls.append(wall_line)
-    # print(walls)
     wall_color = (68, 136, 221)
     wall_width = 3
     wall_collision = []
-    # sprites = pygame.sprite.Group()
-    # objects = pygame.sprite.Group()
+
     curr_y = 0
     for line in walls:
         curr_x = 0
         for cell in line:
+            cell_str = str(cell)
             px = cell_x_size * curr_x
             py = cell_y_size * curr_y
 
             if maze.maze[curr_y][curr_x] == 15:
-                pygame.draw.rect(maze_surface, (26, 58, 106), (px, py, cell_x_size, cell_y_size))
-                pygame.draw.rect(maze_surface, (68, 136, 221), (px + 3, py + 3, cell_x_size - 6, cell_y_size - 6), 2)
+                pygame.draw.rect(
+                    maze_surface,
+                    (26, 58, 106),
+                    (int(px), int(py), int(cell_x_size), int(cell_y_size))
+                )
+                pygame.draw.rect(
+                    maze_surface,
+                    (68, 136, 221),
+                    (
+                        int(px) + 3,
+                        int(py) + 3,
+                        int(cell_x_size) - 6,
+                        int(cell_y_size) - 6
+                    ),
+                    2
+                )
                 curr_x += 1
                 continue
-            if cell[3] == "1":  # North
+            if cell_str[3] == "1":  # North
                 start_x = 0+cell_x_size*curr_x
                 start_y = 0+cell_y_size*curr_y
                 end_x = cell_x_size+cell_x_size*curr_x
                 end_y = 0+cell_y_size*curr_y
                 wall_collision.append(((start_x, start_y), (end_x, end_y)))
-                pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
-            if cell[2] == "1":  # East
+                pygame.draw.line(
+                    maze_surface,
+                    wall_color,
+                    (start_x, start_y),
+                    (end_x, end_y),
+                    wall_width
+                )
+            if cell_str[2] == "1":  # East
                 start_x = cell_x_size+cell_x_size*curr_x
                 start_y = cell_y_size+cell_y_size*curr_y
                 end_x = cell_x_size+cell_x_size*curr_x
                 end_y = 0+cell_y_size*curr_y
                 wall_collision.append(((start_x, start_y), (end_x, end_y)))
-                pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
-            if cell[1] == "1":  # South
+                pygame.draw.line(
+                    maze_surface,
+                    wall_color,
+                    (start_x, start_y),
+                    (end_x, end_y),
+                    wall_width
+                )
+            if cell_str[1] == "1":  # South
                 start_x = cell_x_size+cell_x_size*curr_x
                 start_y = cell_y_size+cell_y_size*curr_y
                 end_x = 0+cell_x_size*curr_x
                 end_y = cell_y_size+cell_y_size*curr_y
                 wall_collision.append(((start_x, start_y), (end_x, end_y)))
-                pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
-            if cell[0] == "1":  # West
+                pygame.draw.line(
+                    maze_surface,
+                    wall_color,
+                    (start_x, start_y),
+                    (end_x, end_y),
+                    wall_width
+                )
+            if cell_str[0] == "1":  # West
                 start_x = 0+cell_x_size*curr_x
                 start_y = 0+cell_y_size*curr_y
                 end_x = 0+cell_x_size*curr_x
                 end_y = cell_y_size+cell_y_size*curr_y
                 wall_collision.append(((start_x, start_y), (end_x, end_y)))
-                pygame.draw.line(maze_surface, wall_color, (start_x, start_y), (end_x, end_y), wall_width)
+                pygame.draw.line(
+                    maze_surface,
+                    wall_color,
+                    (start_x, start_y),
+                    (end_x, end_y),
+                    wall_width
+                )
             curr_x += 1
         curr_y += 1
 
-    # pygame.draw.lines(screen, wall_color, False, [(0, 0), (screen_x, screen_y), (500, 0), (0, 500)])
-    #  ^ maybe try a big for loop like on amazing
     mid_col = (maze._width - 1) // 2
     mid_row = (maze._height - 1) // 2
     spawn_x = mid_col * cell_x_size + cell_x_size / 2
@@ -223,7 +273,16 @@ def game(maze: MazeGenerator, config: dict):
     }
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
-    pagman = PacMan(maze_gen, config, spawn_x, spawn_y, image_list, cell_x_size, cell_y_size)
+    print(cell_x_size)
+    pagman = PacMan(
+        maze_gen,
+        config,
+        spawn_x,
+        spawn_y,
+        image_list,
+        cell_x_size,
+        cell_y_size
+    )
     pacgum_group = pygame.sprite.Group()
     super_pacgum_group = pygame.sprite.Group()
     spwans = [(0, 0), (0, maze._height-1),
@@ -232,26 +291,37 @@ def game(maze: MazeGenerator, config: dict):
     l_pacgum = []
     for row in range(maze._height):
         for col in range(maze._width):
-            gum_spwan = maze.maze[row][col]
-            # cant spwan on walls and where the ghosts spawn and where the player spawns 
-            if gum_spwan != 15 and (col, row) not in spwans:
+            gum_spawn = maze.maze[row][col]
+            if gum_spawn != 15 and (col, row) not in spwans:
                 cx = col * cell_x_size + cell_x_size / 2
                 cy = row * cell_y_size + cell_y_size / 2
                 l_pacgum.append((cx, cy))
     if len(l_pacgum) < config["pacgum"]:
-        print(f"Warning: Requested {config['pacgum']} pacgums, but only {len(l_pacgum)} valid spawn locations available.")
+        print(
+            f"Warning: Requested {config['pacgum']} pacgums,\
+but only {len(l_pacgum)} valid spawn locations available."
+        )
     for i in range(config["pacgum"]):
         if not l_pacgum:
             break
         spawn = random.choice(l_pacgum)
         l_pacgum.remove(spawn)
-        pacgum_group.add(Pacgum(*spawn))
-    # i want lile x = 0 and y = middle of size, then x = max and y = middle, then y = 0 and x = middle, then y = max and x = middle, then the player spawn, then just randomize the rest of the spawns for the pacgum
+        pacgum_group.add(Pacgum(spawn[0], spawn[1]))
     super_spawns = []
-    super_spawns.append((cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2))
-    super_spawns.append((cell_x_size * mid_col + cell_x_size / 2, cell_y_size / 2))
-    super_spawns.append((cell_x_size * mid_col + cell_x_size / 2, cell_y_size * (maze._height - 1) + cell_y_size / 2))
-    super_spawns.append((cell_x_size * (maze._width - 1) + cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2))
+    super_spawns.append(
+        (cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2)
+    )
+    super_spawns.append(
+        (cell_x_size * mid_col + cell_x_size / 2, cell_y_size / 2)
+    )
+    super_spawns.append(
+        (cell_x_size * mid_col + cell_x_size / 2,
+         cell_y_size * (maze._height - 1) + cell_y_size / 2)
+    )
+    super_spawns.append(
+        (cell_x_size * (maze._width - 1) + cell_x_size / 2,
+         cell_y_size * mid_row + cell_y_size / 2)
+    )
     for spawn in super_spawns:
         if spawn in spwans:
             continue
@@ -277,23 +347,41 @@ def game(maze: MazeGenerator, config: dict):
         # extra_screen.fill(black)
         elapsed = (pygame.time.get_ticks() - 0) // 1000
         time_left = max(0, config["level_max_time"] - elapsed)
-        draw_ui(screen, pagman.player.score, pagman.player.lives, time_left)
+        draw_ui(
+            screen,
+            pagman.player.score,
+            pagman.player.lives,
+            time_left,
+            screen_x,
+            screen_y
+        )
         screen.blit(maze_surface, (0, 0))
         # extra_screen.blit()
         pacgum_group.draw(screen)
         super_pacgum_group.draw(screen)
-        eaten = pygame.sprite.spritecollide(pagman.player, pacgum_group, True, collided=lambda a, b: a.rect.colliderect(b.hitbox))
-        if pygame.sprite.spritecollide(pagman.player, super_pacgum_group, True, collided=lambda a, b: a.rect.colliderect(b.hitbox)):
+        eaten = pygame.sprite.spritecollide(
+            pagman.player,
+            pacgum_group,
+            True,
+            collided=lambda a, b: a.rect.colliderect(b.hitbox)
+        )
+        if pygame.sprite.spritecollide(
+            pagman.player,
+            super_pacgum_group,
+            True, collided=lambda a, b: a.rect.colliderect(b.hitbox)
+        ):
             pagman.player.score_gain(config["points_per_super_pacgum"])
             for ghost in pagman.ghosts:
                 ghost.is_edible = True
+                ghost.edible_start = current_time
+                ghost.movement.speed = ghost.base_speed // 2
         if eaten:
             pagman.pacgum -= len(eaten)
             pagman.player.score_gain(config["points_per_pacgum"])
             if pagman.pacgum <= 0:
                 print("You win!")
                 sys.exit()
-        pacman_group.update(walls, current_time)   # <- move all sprites using grid logically
+        pacman_group.update(walls, current_time)
         pacman_group.draw(screen)
         ghost0_group.update(walls, pagman.player)
         ghost0_group.draw(screen)
@@ -317,7 +405,9 @@ if __name__ == "__main__":
             if not line.lstrip().startswith("#"):
                 lines.append(line)
     config = json.loads("".join(lines))
-    maze_gen = MazeGenerator(seed=config["seed"], size=(config["height"], config["width"]))
+    maze_gen = MazeGenerator(
+        seed=config["seed"], size=(config["width"], config["height"])
+    )
     # hex_lists = [[hex(x) for x in inner] for inner in maze_gen.maze]
     # hex_lists2 = [[x.replace("0x", "") for x in hex] for hex in hex_lists]
     # print(hex_lists2)

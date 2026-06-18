@@ -1,5 +1,14 @@
+from typing import Any
+
+
 class Movement():
-    def __init__(self, cell_x_size, cell_y_size, spawn, speed):
+    def __init__(
+            self,
+            cell_x_size: float,
+            cell_y_size: float,
+            spawn: tuple[float, float],
+            speed: int
+    ):
         self.cell_x_size = cell_x_size  # needed?
         self.cell_y_size = cell_y_size
         self.pixel_x, self.pixel_y = spawn
@@ -13,7 +22,9 @@ class Movement():
         self.next_dir_y = 0
         self.speed = speed
 
-    def can_move(self, walls, col, row, dx, dy):
+    def can_move(
+            self, walls: Any, col: Any, row: Any, dx: Any, dy: Any
+    ) -> bool:
         if row < 0 or row >= len(walls) or col < 0 or col >= len(walls[0]):
             return False
         cell = walls[row][col]
@@ -28,7 +39,9 @@ class Movement():
             return False  # North
         return True
 
-    def update(self, walls, next_dir_x, next_dir_y) -> tuple[int, int]:
+    def update(
+            self, walls: Any, next_dir_x: int, next_dir_y: int
+    ) -> tuple[int, int]:
         self.next_dir_x, self.next_dir_y = next_dir_x, next_dir_y
         # Calculate the center pixel of the current grid cell
         target_pixel_x = self.grid_x * self.cell_x_size + self.cell_x_size / 2
