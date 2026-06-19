@@ -102,19 +102,12 @@ def draw_ui(
         time_left: int,
         screen_x: int,
         screen_y: int
-) -> None:
+) -> Dict[str, pygame.Rect]:
     font = pygame.font.SysFont("Serif", 40, True)
-    # UI background
-    pygame.draw.rect(screen, (0, 0, 0),
-                     (screen_x, 0, screen_x+250, screen_x))
+    pygame.draw.rect(screen, (0, 0, 0), (screen_x, 0, screen_x+250, screen_x))
 
-    score_text = font.render(
-        f"Score: {score}", True, (255, 255, 255)
-    )
-
-    lives_text = font.render(
-        "Lives:", True, (255, 255, 255)
-    )
+    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+    lives_text = font.render("Lives:", True, (255, 255, 255))
 
     life_icon = pygame.image.load("PagMan.png")
     if lives <= 3 and lives > 0:
@@ -127,16 +120,20 @@ def draw_ui(
 
     minutes = time_left // 60
     seconds = time_left % 60
+    timer_text = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
 
-    timer_text = font.render(
-        f"Time: {minutes:02}:{seconds:02}",
-        True,
-        (255, 255, 255)
-    )
+    freeze_btn = pygame.Rect(screen_x + 20, 130, 200, 40)
+    pygame.draw.rect(screen, (50, 50, 50), freeze_btn)
+    freeze_text = font.render("Ghost Freeze", True, (255, 255, 255))
+    screen.blit(freeze_text, (screen_x + 25, 135))
 
     screen.blit(score_text, (screen_x + 20, 10))
     screen.blit(lives_text, (screen_x + 20, 50))
     screen.blit(timer_text, (screen_x + 20, 90))
+    screen.blit(freeze_text, (screen_x + 25, 135))
+
+    return {"ghost_freeze": freeze_btn}
+
 
 
 def game(maze: MazeGenerator, config: dict) -> None:
@@ -337,15 +334,10 @@ but only {len(l_pacgum)} valid spawn locations available."
     pacman_group.add(pagman.player)
     while True:
         clock.tick(30)
-        current_time = pygame.time.get_ticks()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-        screen.fill(black)
-        # extra_screen.fill(black)
         elapsed = (pygame.time.get_ticks() - 0) // 1000
         time_left = max(0, config["level_max_time"] - elapsed)
-        draw_ui(
+        screen.fill(black)
+        buttons = draw_ui(
             screen,
             pagman.player.score,
             pagman.player.lives,
@@ -353,6 +345,20 @@ but only {len(l_pacgum)} valid spawn locations available."
             screen_x,
             screen_y
         )
+        current_time = pygame.time.get_ticks()
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if buttons["ghost_freeze"].collidepoint(event.pos) and pagman.ghosts[0].frozen is False:
+                    for ghost in pagman.ghosts:
+                        ghost.frozen = True
+                elif buttons["ghost_freeze"].collidepoint(event.pos) and pagman.ghosts[0].frozen is True:
+                    for ghost in pagman.ghosts:
+                        ghost.frozen = False
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+        # extra_screen.fill(black)
+
         screen.blit(maze_surface, (0, 0))
         # extra_screen.blit()
         pacgum_group.draw(screen)

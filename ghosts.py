@@ -28,6 +28,7 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
         self.color = color
         self.position = spawn
         self.base_speed = 4
+        self.frozen = False
         self.edible_start = 0
         self.edible_duration = 8000  # -(level_n*1000)
         a = int(cell_x_size * 2/3)
@@ -215,6 +216,11 @@ class redGhost(Ghost):
 
     def update(self, walls: Any, player: Player) -> None:
         self.eye_update()
+        if self.frozen:
+            self.movement.speed = 0
+            pass
+        else:
+            self.movement.speed = self.base_speed
         if self.is_edible is False and self.is_alive is True:
             self.death_routine(player)
             next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
@@ -271,6 +277,11 @@ class orangeGhost(Ghost):
 
     def update(self, walls: Any, player: Player) -> None:
         self.eye_update()
+        if self.frozen:
+            self.movement.speed = 0
+            pass
+        else:
+            self.movement.speed = self.base_speed
         if self.is_edible is False and self.is_alive is True:
             self.death_routine(player)
             next_dir_x = 0
@@ -317,6 +328,11 @@ class pinkGhost(Ghost):
         )
 
     def update(self, walls: Any, player: Player) -> None:
+        if self.frozen:
+            self.movement.speed = 0
+            pass
+        else:
+            self.movement.speed = self.base_speed
         self.eye_update()
         if self.is_edible is False and self.is_alive is True:
             self.death_routine(player)
@@ -358,6 +374,11 @@ class cyanGhost(Ghost):
 
     def update(self, walls: Any, player: Player) -> None:
         self.eye_update()
+        if self.frozen:
+            self.movement.speed = 0
+            pass
+        else:
+            self.movement.speed = self.base_speed
         if self.is_edible is False and self.is_alive is True:
             self.death_routine(player)
             if player.movement.dir_x == 0 and player.movement.dir_y == 0:
