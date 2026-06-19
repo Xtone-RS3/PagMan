@@ -40,6 +40,7 @@ class PacMan:
             cell_y_size: float
     ):
         self.maze: MazeGenerator = maze
+        self.level_cap = config["level_cap"]
         self.config = config
         self.ghost_spawn = [
             (
@@ -101,9 +102,11 @@ def draw_ui(
         lives: int,
         time_left: int,
         screen_x: int,
-        screen_y: int
+        screen_y: int,
+        ghost_speed: int
 ) -> Dict[str, pygame.Rect]:
     font = pygame.font.SysFont("Serif", 40, True)
+    cheat_font = pygame.font.SysFont("Serif", 20, True)
     pygame.draw.rect(screen, (0, 0, 0), (screen_x, 0, screen_x+250, screen_x))
 
     score_text = font.render(f"Score: {score}", True, (255, 255, 255))
@@ -127,13 +130,35 @@ def draw_ui(
     freeze_text = font.render("Ghost Freeze", True, (255, 255, 255))
     screen.blit(freeze_text, (screen_x + 25, 135))
 
+    invenci_btn = pygame.Rect(screen_x + 20, 190, 200, 40)
+    pygame.draw.rect(screen, (50, 50, 50), invenci_btn)
+    invenci_text = font.render("Invencibility", True, (255, 255, 255))
+    screen.blit(invenci_text, (screen_x + 25, 195))
+
+    ghost_speed_text = cheat_font.render("Ghost Speed", True, (255, 255, 255))
+    screen.blit(ghost_speed_text, (screen_x + 25, 255))
+
+    ghost_speed_minus = pygame.Rect(screen_x + 30+105, 255, 20, 20)
+    pygame.draw.rect(screen, (50, 50, 50), ghost_speed_minus)
+    ghost_speed_minus_text = cheat_font.render("-", True, (255, 255, 255))
+    screen.blit(ghost_speed_minus_text, (screen_x + 36+105, 255))
+
+    # ghost_speed_stat = pygame.Rect(screen_x + 30+105, 255, 20, 20)
+    # pygame.draw.rect(screen, (50, 50, 50), ghost_speed_stat)
+    ghost_speed_stat_text = cheat_font.render(f"{ghost_speed}", True, (255, 255, 255))
+    screen.blit(ghost_speed_stat_text, (screen_x + 65+105, 255))
+
+    ghost_speed_plus = pygame.Rect(screen_x + 90+105, 255, 20, 20)
+    pygame.draw.rect(screen, (50, 50, 50), ghost_speed_plus)
+    ghost_speed_plus_text = cheat_font.render("+", True, (255, 255, 255))
+    screen.blit(ghost_speed_plus_text, (screen_x + 93+105, 255))
+
     screen.blit(score_text, (screen_x + 20, 10))
     screen.blit(lives_text, (screen_x + 20, 50))
     screen.blit(timer_text, (screen_x + 20, 90))
     screen.blit(freeze_text, (screen_x + 25, 135))
 
-    return {"ghost_freeze": freeze_btn}
-
+    return {"ghost_freeze": freeze_btn, "invencibility": invenci_btn, "ghost_speed_plus": ghost_speed_plus, "ghost_speed_minus": ghost_speed_minus}
 
 
 def game(maze: MazeGenerator, config: dict) -> None:
@@ -269,6 +294,7 @@ def game(maze: MazeGenerator, config: dict) -> None:
     }
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
+    # split this into LEVEL load
     pagman = PacMan(
         maze_gen,
         config,
@@ -278,6 +304,7 @@ def game(maze: MazeGenerator, config: dict) -> None:
         cell_x_size,
         cell_y_size
     )
+    # pygame.display.set_caption(f"Pac-Man level: {level}")  # level is one of the args passed on game()
     pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
     super_pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
     spwans = [(0, 0), (0, maze._height-1),
@@ -332,6 +359,7 @@ but only {len(l_pacgum)} valid spawn locations available."
     ghost3_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost3_group.add(pagman.ghosts[3])
     pacman_group.add(pagman.player)
+    hold_lives = 0
     while True:
         clock.tick(30)
         elapsed = (pygame.time.get_ticks() - 0) // 1000
@@ -343,7 +371,8 @@ but only {len(l_pacgum)} valid spawn locations available."
             pagman.player.lives,
             time_left,
             screen_x,
-            screen_y
+            screen_y,
+            pagman.ghosts[0].movement.speed
         )
         current_time = pygame.time.get_ticks()
         for event in pygame.event.get():
@@ -354,6 +383,23 @@ but only {len(l_pacgum)} valid spawn locations available."
                 elif buttons["ghost_freeze"].collidepoint(event.pos) and pagman.ghosts[0].frozen is True:
                     for ghost in pagman.ghosts:
                         ghost.frozen = False
+                if buttons["invencibility"].collidepoint(event.pos) and pagman.player.lives != -1:
+                    hold_lives = pagman.player.lives
+                    pagman.player.lives = -1
+                elif buttons["invencibility"].collidepoint(event.pos) and pagman.player.lives == -1:
+                    if hold_lives == 0:
+                        hold_lives = 3
+                    pagman.player.lives = hold_lives
+                if buttons["ghost_speed_plus"].collidepoint(event.pos):
+                    for ghost in pagman.ghosts:
+                        ghost.base_speed += 1
+                        if ghost.base_speed <= 1:
+                            ghost.base_speed = 1
+                if buttons["ghost_speed_minus"].collidepoint(event.pos):
+                    for ghost in pagman.ghosts:
+                        ghost.base_speed -= 1
+                        if ghost.base_speed <= 1:
+                            ghost.base_speed = 1
             if event.type == pygame.QUIT:
                 sys.exit()
 

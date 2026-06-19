@@ -59,9 +59,9 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
         )
         self.hitbox = self.rect.inflate(-28, -28)
 
-    # @abstractmethod
-    # def update(self, walls: Any, player: Player) -> None:
-    #     pass
+    @abstractmethod
+    def update(self, walls: Any, player: Player) -> None:    
+        pass
 
     def eye_update(self) -> None:
         """TODO"""
@@ -94,7 +94,12 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
     def death_routine(self, player: Player) -> None:
         if player.lives != -1:
             if self.rect.colliderect(player.rect):
+                self.movement.pixel_x, self.movement.pixel_y = self.spawn
+                self.movement.grid_x = int(self.movement.pixel_x // self.movement.cell_x_size)
+                self.movement.grid_y = int(self.movement.pixel_y // self.movement.cell_y_size)
+                self.movement.dir_x, self.movement.dir_y = 0, 0
                 player.death()
+                self.is_alive = False
 
     def escape(self, walls: Any, player: Player) -> None:
         current_time = pygame.time.get_ticks()
@@ -135,6 +140,19 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
                     if dist[i] == max_dist
                 ]
                 next_dir_x, next_dir_y = random.choice(best_dirs)
+        else:
+            # randomly
+            possible_dirs = []
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                if self.movement.can_move(
+                    walls, self.movement.grid_x, self.movement.grid_y, dx, dy
+                ):
+                    if (dx, dy) != (
+                        -self.movement.dir_x, -self.movement.dir_y
+                    ):
+                        possible_dirs.append((dx, dy))
+            if possible_dirs:
+                next_dir_x, next_dir_y = random.choice(possible_dirs)
 
         self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
@@ -145,7 +163,6 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
     def respawn(self, walls: Any, player: Player) -> None:
         self.movement.speed = self.base_speed*2
         next_dir_x, next_dir_y, path_ghost = self.bfs(walls, self.spawn_coords)
-        print(walls[1][0]) 
         _, _, path = self.bfs(walls, player.grid_pos)
         self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (

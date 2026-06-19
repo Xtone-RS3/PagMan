@@ -119,8 +119,11 @@ class Player(pygame.sprite.Sprite):
             # this should only end the game and boot the player to scoreboard
             sys.exit()
         else:
-            # respawn
-            pass
+            self.movement.pixel_x, self.movement.pixel_y = self.spawn
+            self.movement.grid_x = int(self.movement.pixel_x // self.cell_x_size)
+            self.movement.grid_y = int(self.movement.pixel_y // self.cell_y_size)
+            self.movement.dir_x, self.movement.dir_y = 0, 0
+            self.next_dir_x, self.next_dir_y = 0, 0
 
     def score_gain(self, score_gained: int) -> None:
         self.score += score_gained
