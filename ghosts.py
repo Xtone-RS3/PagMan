@@ -143,7 +143,8 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
 
     def respawn(self, walls: Any, player: Player) -> None:
         self.movement.speed = self.base_speed*2
-        next_dir_x, next_dir_y, _ = self.bfs(walls, self.spawn_coords)
+        next_dir_x, next_dir_y, path_ghost = self.bfs(walls, self.spawn_coords)
+        print(walls[1][0]) 
         _, _, path = self.bfs(walls, player.grid_pos)
         self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
@@ -162,7 +163,7 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
         start = (self.movement.grid_x, self.movement.grid_y)
         queue = [start]
         visited = {start}
-        origin = {start: (0, 0)}
+        origin: dict[tuple[int, int], tuple[int, int] | None] = {start: None}
         found = False
         current = start
         while queue:
@@ -180,10 +181,10 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
                     origin[neighbor] = current
         path: List = []
         if found:
-            node = current
-            while node != (0, 0):
+            node: tuple[int, int] | None = current
+            while node is not None:
                 path.append(node)
-                node = origin[node]
+                node = origin.get(node)
             path.reverse()
         if len(path) >= 2:
             curr_cell = path[0]

@@ -59,7 +59,7 @@ class PacMan:
                 0 * cell_y_size + cell_y_size / 2
             )
         ]
-        print(self.ghost_spawn)
+
         self.ghosts: List[Ghost] = []
         self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size,
                              cell_y_size=cell_y_size,
@@ -162,9 +162,9 @@ def game(maze: MazeGenerator, config: dict) -> None:
     #  West, South, East, North
     walls: List[List[str]] = []
     for line in maze.maze:
-        wall_line = []
-        for cell in line:
-            cell_walls = bin(cell)[2:]
+        wall_line: List[str] = []
+        for raw_cell in line:
+            cell_walls = bin(raw_cell)[2:]
             while len(cell_walls) != 4:
                 cell_walls = "0"+cell_walls
             wall_line.append(cell_walls)
@@ -172,12 +172,11 @@ def game(maze: MazeGenerator, config: dict) -> None:
     wall_color = (68, 136, 221)
     wall_width = 3
     wall_collision = []
-
     curr_y = 0
-    for line in walls:
+    while curr_y < len(walls):
         curr_x = 0
-        for cell in line:
-            cell_str = str(cell)
+        while curr_x < len(walls[curr_y]):
+            cell: str = walls[curr_y][curr_x]
             px = cell_x_size * curr_x
             py = cell_y_size * curr_y
 
@@ -200,7 +199,7 @@ def game(maze: MazeGenerator, config: dict) -> None:
                 )
                 curr_x += 1
                 continue
-            if cell_str[3] == "1":  # North
+            if cell[3] == "1":  # North
                 start_x = 0+cell_x_size*curr_x
                 start_y = 0+cell_y_size*curr_y
                 end_x = cell_x_size+cell_x_size*curr_x
@@ -213,7 +212,7 @@ def game(maze: MazeGenerator, config: dict) -> None:
                     (end_x, end_y),
                     wall_width
                 )
-            if cell_str[2] == "1":  # East
+            if cell[2] == "1":  # East
                 start_x = cell_x_size+cell_x_size*curr_x
                 start_y = cell_y_size+cell_y_size*curr_y
                 end_x = cell_x_size+cell_x_size*curr_x
@@ -226,7 +225,7 @@ def game(maze: MazeGenerator, config: dict) -> None:
                     (end_x, end_y),
                     wall_width
                 )
-            if cell_str[1] == "1":  # South
+            if cell[1] == "1":  # South
                 start_x = cell_x_size+cell_x_size*curr_x
                 start_y = cell_y_size+cell_y_size*curr_y
                 end_x = 0+cell_x_size*curr_x
@@ -239,7 +238,7 @@ def game(maze: MazeGenerator, config: dict) -> None:
                     (end_x, end_y),
                     wall_width
                 )
-            if cell_str[0] == "1":  # West
+            if cell[0] == "1":  # West
                 start_x = 0+cell_x_size*curr_x
                 start_y = 0+cell_y_size*curr_y
                 end_x = 0+cell_x_size*curr_x
@@ -273,7 +272,6 @@ def game(maze: MazeGenerator, config: dict) -> None:
     }
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
-    print(cell_x_size)
     pagman = PacMan(
         maze_gen,
         config,
@@ -283,12 +281,12 @@ def game(maze: MazeGenerator, config: dict) -> None:
         cell_x_size,
         cell_y_size
     )
-    pacgum_group = pygame.sprite.Group()
-    super_pacgum_group = pygame.sprite.Group()
+    pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
+    super_pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
     spwans = [(0, 0), (0, maze._height-1),
               (maze._width-1, 0), (maze._width-1, maze._height-1),
               (pagman.player.grid_x, pagman.player.grid_y)]
-    l_pacgum = []
+    l_pacgum: List[tuple[float, float]] = []
     for row in range(maze._height):
         for col in range(maze._width):
             gum_spawn = maze.maze[row][col]
