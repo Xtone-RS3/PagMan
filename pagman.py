@@ -147,8 +147,6 @@ def draw_ui(
     ghost_speed_minus_text = cheat_font.render("-", True, (255, 255, 255))
     screen.blit(ghost_speed_minus_text, (screen_x + 36+105, 255))
 
-    # ghost_speed_stat = pygame.Rect(screen_x + 30+105, 255, 20, 20)
-    # pygame.draw.rect(screen, (50, 50, 50), ghost_speed_stat)
     ghost_speed_stat_text = cheat_font.render(
         f"{ghost_speed}", True, (255, 255, 255)
     )
@@ -159,6 +157,26 @@ def draw_ui(
     ghost_speed_plus_text = cheat_font.render("+", True, (255, 255, 255))
     screen.blit(ghost_speed_plus_text, (screen_x + 93+105, 255))
 
+    ##########################
+    life_cheat_text = cheat_font.render("Life cheat", True, (255, 255, 255))
+    screen.blit(life_cheat_text, (screen_x + 25, 280))
+
+    life_cheat_minus = pygame.Rect(screen_x + 30+105, 280, 20, 20)
+    pygame.draw.rect(screen, (50, 50, 50), life_cheat_minus)
+    life_cheat_minus_text = cheat_font.render("-", True, (255, 255, 255))
+    screen.blit(life_cheat_minus_text, (screen_x + 36+105, 280))
+
+    life_cheat_stat_text = cheat_font.render(
+        f"{lives}", True, (255, 255, 255)
+    )
+    screen.blit(life_cheat_stat_text, (screen_x + 65+105, 280))
+
+    life_cheat_plus = pygame.Rect(screen_x + 90+105, 280, 20, 20)
+    pygame.draw.rect(screen, (50, 50, 50), life_cheat_plus)
+    life_cheat_plus_text = cheat_font.render("+", True, (255, 255, 255))
+    screen.blit(life_cheat_plus_text, (screen_x + 93+105, 280))
+    ##########################
+
     screen.blit(score_text, (screen_x + 20, 10))
     screen.blit(lives_text, (screen_x + 20, 50))
     screen.blit(timer_text, (screen_x + 20, 90))
@@ -168,11 +186,16 @@ def draw_ui(
         "ghost_freeze": freeze_btn,
         "invencibility": invenci_btn,
         "ghost_speed_plus": ghost_speed_plus,
-        "ghost_speed_minus": ghost_speed_minus
+        "ghost_speed_minus": ghost_speed_minus,
+        "life_cheat_plus": life_cheat_plus,
+        "life_cheat_minus": life_cheat_minus
     }
 
 
-def game(maze: MazeGenerator, config: dict) -> None:
+def game(level: int, config: dict) -> None:
+    maze = MazeGenerator(
+        seed=config["seed"] + level, size=(config["width"], config["height"])
+    )
     pygame.init()
     screen_x = 720
     cell_x_size = screen_x/maze._width
@@ -309,7 +332,7 @@ def game(maze: MazeGenerator, config: dict) -> None:
         image_list[key] = pygame.image.load(file)
     # split this into LEVEL load
     pagman = PacMan(
-        maze_gen,
+        maze,
         config,
         spawn_x,
         spawn_y,
@@ -317,8 +340,7 @@ def game(maze: MazeGenerator, config: dict) -> None:
         cell_x_size,
         cell_y_size
     )
-    # pygame.display.set_caption(f"Pac-Man level: {level}")  # level is one of\
-    # the args passed on game()
+    pygame.display.set_caption(f"Pac-Man level: {level}")
     pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
     super_pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
     spwans = [(0, 0), (0, maze._height-1),
@@ -422,7 +444,14 @@ but only {len(l_pacgum)} valid spawn locations available."
                         ghost.base_speed -= 1
                         if ghost.base_speed <= 1:
                             ghost.base_speed = 1
+                if buttons["life_cheat_plus"].collidepoint(event.pos):
+                    if pagman.player.lives >= 1:
+                        pagman.player.lives += 1
+                if buttons["life_cheat_minus"].collidepoint(event.pos):
+                    if pagman.player.lives >= 2:
+                        pagman.player.lives -= 1
             if event.type == pygame.QUIT:
+                # return False
                 sys.exit()
 
         # extra_screen.fill(black)
@@ -452,6 +481,7 @@ but only {len(l_pacgum)} valid spawn locations available."
             pagman.player.score_gain(config["points_per_pacgum"])
             if pagman.pacgum <= 0:
                 print("You win!")
+                # return True
                 sys.exit()
         pacman_group.update(walls, current_time)
         pacman_group.draw(screen)
@@ -477,11 +507,9 @@ if __name__ == "__main__":
             if not line.lstrip().startswith("#"):
                 lines.append(line)
     config = json.loads("".join(lines))
-    maze_gen = MazeGenerator(
-        seed=config["seed"], size=(config["width"], config["height"])
-    )
     # hex_lists = [[hex(x) for x in inner] for inner in maze_gen.maze]
     # hex_lists2 = [[x.replace("0x", "") for x in hex] for hex in hex_lists]
     # print(hex_lists2)
     # print(config)
-    game(maze_gen, config)
+    game(1, config)
+    sys.exit()
