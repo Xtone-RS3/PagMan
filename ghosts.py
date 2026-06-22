@@ -60,7 +60,7 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
         self.hitbox = self.rect.inflate(-28, -28)
 
     @abstractmethod
-    def update(self, walls: Any, player: Player) -> None:
+    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
         pass
 
     def eye_update(self) -> None:
@@ -91,19 +91,21 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
             else:
                 self.image = self.eyes[1]
 
-    def death_routine(self, player: Player) -> None:
+    def death_routine(self, player: Player, ghosts: List["Ghost"]) -> None:
         if player.lives != -1:
             if self.rect.colliderect(player.rect):
-                self.movement.pixel_x, self.movement.pixel_y = self.spawn
-                self.movement.grid_x = int(
-                    self.movement.pixel_x // self.movement.cell_x_size
-                )
-                self.movement.grid_y = int(
-                    self.movement.pixel_y // self.movement.cell_y_size
-                )
-                self.movement.dir_x, self.movement.dir_y = 0, 0
+                for ghost in ghosts:
+                    ghost.movement.pixel_x, ghost.movement.pixel_y = ghost.spawn
+                    ghost.movement.grid_x = int(
+                        ghost.movement.pixel_x // ghost.movement.cell_x_size
+                    )
+                    ghost.movement.grid_y = int(
+                        ghost.movement.pixel_y // ghost.movement.cell_y_size
+                    )
+                    ghost.movement.dir_x, ghost.movement.dir_y = 0, 0
+                    ghost.rect.center = (int(ghost.movement.pixel_x),
+                                         int(ghost.movement.pixel_y))
                 player.death()
-                self.is_alive = False
 
     def escape(self, walls: Any, player: Player) -> None:
         current_time = pygame.time.get_ticks()
@@ -237,7 +239,7 @@ class redGhost(Ghost):
             cell_y_size,
         )
 
-    def update(self, walls: Any, player: Player) -> None:
+    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0
@@ -245,32 +247,11 @@ class redGhost(Ghost):
         else:
             self.movement.speed = self.base_speed
         if self.is_edible is False and self.is_alive is True:
-            self.death_routine(player)
+            if not self.frozen:
+                self.death_routine(player, ghosts)
             next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
             # Atualiza movimento e posição do sprite
-            if len(path) < 8:
-                self.movement.update(walls, next_dir_x, next_dir_y)
-            else:
-                next_dir_x = 0
-                next_dir_y = 0
-
-                possible_dirs = []
-                for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                    if self.movement.can_move(
-                        walls,
-                        self.movement.grid_x,
-                        self.movement.grid_y,
-                        dx,
-                        dy
-                    ):
-                        if (dx, dy) != (
-                            -self.movement.dir_x, -self.movement.dir_y
-                        ):
-                            possible_dirs.append((dx, dy))
-                if possible_dirs:
-                    next_dir_x, next_dir_y = random.choice(possible_dirs)
-
-                self.movement.update(walls, next_dir_x, next_dir_y)
+            self.movement.update(walls, next_dir_x, next_dir_y)
             self.rect.center = (
                 int(self.movement.pixel_x),
                 int(self.movement.pixel_y)
@@ -298,7 +279,7 @@ class orangeGhost(Ghost):
             cell_y_size,
         )
 
-    def update(self, walls: Any, player: Player) -> None:
+    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0
@@ -306,7 +287,7 @@ class orangeGhost(Ghost):
         else:
             self.movement.speed = self.base_speed
         if self.is_edible is False and self.is_alive is True:
-            self.death_routine(player)
+            self.death_routine(player, ghosts)
             next_dir_x = 0
             next_dir_y = 0
 
@@ -350,7 +331,7 @@ class pinkGhost(Ghost):
             cell_y_size,
         )
 
-    def update(self, walls: Any, player: Player) -> None:
+    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
         if self.frozen:
             self.movement.speed = 0
             pass
@@ -358,7 +339,7 @@ class pinkGhost(Ghost):
             self.movement.speed = self.base_speed
         self.eye_update()
         if self.is_edible is False and self.is_alive is True:
-            self.death_routine(player)
+            self.death_routine(player, ghosts)
             spawn_grid = (
                 int(self.spawn[0] // self.movement.cell_x_size),
                 int(self.spawn[1] // self.movement.cell_y_size)
@@ -395,7 +376,7 @@ class cyanGhost(Ghost):
             cell_y_size,
         )
 
-    def update(self, walls: Any, player: Player) -> None:
+    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0
@@ -403,7 +384,7 @@ class cyanGhost(Ghost):
         else:
             self.movement.speed = self.base_speed
         if self.is_edible is False and self.is_alive is True:
-            self.death_routine(player)
+            self.death_routine(player, ghosts)
             if player.movement.dir_x == 0 and player.movement.dir_y == 0:
                 next_dir_x, next_dir_y = 0, 0
             else:

@@ -11,14 +11,16 @@ class Player(pygame.sprite.Sprite):
             spawn: tuple[float, float],
             cell_x_size: float,
             cell_y_size: float,
-            lives: int = 3
+            lives: int = 3,
+            score: int = 0
     ):
         super().__init__()
         self.spawn = (spawn)  # PacMan class
         self.cell_x_size = cell_x_size
         self.cell_y_size = cell_y_size
         self.lives = lives
-        self.score = 0
+        self.score = score
+        self.just_died = False
         self.orig_image = [pygame.image.load("PagMan.png"),
                            pygame.image.load("PauseMan.png")]
         a = int(cell_x_size * 2/3)
@@ -128,6 +130,9 @@ class Player(pygame.sprite.Sprite):
             )
             self.movement.dir_x, self.movement.dir_y = 0, 0
             self.next_dir_x, self.next_dir_y = 0, 0
+            self.rect.center = (int(self.movement.pixel_x),
+                                int(self.movement.pixel_y))
+            self.just_died = True
 
     def score_gain(self, score_gained: int) -> None:
         self.score += score_gained

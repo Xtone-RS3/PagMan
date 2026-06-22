@@ -10,22 +10,23 @@ from pygame.surface import Surface
 
 
 class Pacgum(pygame.sprite.Sprite):
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float, size: float):
         super().__init__()
         self.image = pygame.image.load("gum1.png")
+        self.image = pygame.transform.scale(self.image, (size, size))
         self.rect = self.image.get_rect()
         self.rect.center = (int(x), int(y))
         self.hitbox = self.rect.inflate(-28, -28)
-        # TODO divide cell size by a factor, 48 / x = 28
 
 
 class superPacgum(pygame.sprite.Sprite):
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float, size: float):
         super().__init__()
         self.image = pygame.image.load("gum3.png")
+        self.image = pygame.transform.scale(self.image, (size, size))
         self.rect = self.image.get_rect()
         self.rect.center = (int(x), int(y))
-        self.hitbox = self.rect.inflate(-10, -10)  # TODO
+        self.hitbox = self.rect.inflate(-10, -10)
 
 
 class PacMan:
@@ -37,7 +38,8 @@ class PacMan:
             spawn_y: float,
             image_list: Dict[Any, Any],
             cell_x_size: float,
-            cell_y_size: float
+            cell_y_size: float,
+            score: int
     ):
         self.maze: MazeGenerator = maze
         self.level_cap = config["level_cap"]
@@ -64,7 +66,7 @@ class PacMan:
         self.ghosts: List[Ghost] = []
         self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size,
                              cell_y_size=cell_y_size,
-                             lives=self.config["lives"])
+                             lives=self.config["lives"], score=score)
         self.pacgum = config["pacgum"]
         self.points_per_pacgum = config["points_per_pacgum"]
         self.points_per_super_pacgum = config["points_per_super_pacgum"]
@@ -192,32 +194,19 @@ def draw_ui(
     }
 
 
-def game(level: int, config: dict) -> None:
+def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_x_size, cell_y_size) -> tuple[bool, Dict[str, int]]:
     maze = MazeGenerator(
         seed=config["seed"] + level, size=(config["width"], config["height"])
     )
-    pygame.init()
-    screen_x = 720
-    cell_x_size = screen_x/maze._width
-    screen_y = 720
-    cell_y_size = screen_y/maze._height
-    cell_x_size, cell_y_size = \
-        min(cell_x_size, cell_y_size), min(cell_x_size, cell_y_size)
-    display_info = pygame.display.Info()
-    window_x = 0
-    if display_info.current_w > screen_x:
-        window_x = screen_x + 250
-    screen = pygame.display.set_mode((window_x, screen_y))
     pygame.display.set_caption("Pac-Man")
     maze_surface: pygame.Surface = pygame.Surface(
         (screen_x, screen_y), pygame.SRCALPHA
     )
     maze_surface.fill((0, 0, 0, 0))
-    #  for the window size just do x*height y*width
     clock = pygame.time.Clock()
     clock.tick(30)
     black = 10, 10, 26
-    #  West, South, East, North
+
     walls: List[List[str]] = []
     for line in maze.maze:
         wall_line: List[str] = []
@@ -330,7 +319,7 @@ def game(level: int, config: dict) -> None:
     }
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
-    # split this into LEVEL load
+
     pagman = PacMan(
         maze,
         config,
@@ -338,7 +327,8 @@ def game(level: int, config: dict) -> None:
         spawn_y,
         image_list,
         cell_x_size,
-        cell_y_size
+        cell_y_size,
+        score
     )
     pygame.display.set_caption(f"Pac-Man level: {level}")
     pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
@@ -359,12 +349,13 @@ def game(level: int, config: dict) -> None:
             f"Warning: Requested {config['pacgum']} pacgums,\
 but only {len(l_pacgum)} valid spawn locations available."
         )
+    size = min(cell_x_size * (2/3), cell_y_size * (2/3))
     for i in range(config["pacgum"]):
         if not l_pacgum:
             break
         spawn = random.choice(l_pacgum)
         l_pacgum.remove(spawn)
-        pacgum_group.add(Pacgum(spawn[0], spawn[1]))
+        pacgum_group.add(Pacgum(spawn[0], spawn[1], size))
     super_spawns = []
     super_spawns.append(
         (cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2)
@@ -383,7 +374,7 @@ but only {len(l_pacgum)} valid spawn locations available."
     for spawn in super_spawns:
         if spawn in spwans:
             continue
-        super_pacgum_group.add(superPacgum(*spawn))
+        super_pacgum_group.add(superPacgum(spawn[0], spawn[1], size))
 
     pacman_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost0_group: pygame.sprite.Group = pygame.sprite.Group()
@@ -396,10 +387,52 @@ but only {len(l_pacgum)} valid spawn locations available."
     ghost3_group.add(pagman.ghosts[3])
     pacman_group.add(pagman.player)
     hold_lives = 0
+
+    def wait_for_keypress(message="Press any key to start"):
+        waiting = True
+        while waiting:
+            screen.fill(black)
+            screen.blit(maze_surface, (0, 0))
+            pacgum_group.draw(screen)
+            super_pacgum_group.draw(screen)
+            pacman_group.draw(screen)
+            ghost0_group.draw(screen)
+            ghost1_group.draw(screen)
+            ghost2_group.draw(screen)
+            ghost3_group.draw(screen)
+            draw_ui(
+                screen,
+                pagman.player.score,
+                pagman.player.lives,
+                config["level_max_time"],
+                screen_x,
+                screen_y,
+                pagman.ghosts[0].movement.speed
+            )
+            font = pygame.font.SysFont("Serif", 40, True)
+            text = font.render(message, True, (255, 255, 0))
+            screen.blit(text, (screen_x // 2 - text.get_width() // 2, screen_y // 2))
+            pygame.display.flip()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
+                    return False, running_stats
+                if event.type == pygame.KEYDOWN:
+                    waiting = False
+        return True, {}
+
+    success, stats = wait_for_keypress()
+    if not success:
+        return False, stats
+
+    paused = False
+    start_ticks = pygame.time.get_ticks()
+
     while True:
         clock.tick(30)
-        elapsed = (pygame.time.get_ticks() - 0) // 1000
-        time_left = max(0, config["level_max_time"] - elapsed)
+        if not paused:
+            elapsed = (pygame.time.get_ticks() - start_ticks) // 1000
+            time_left = max(0, config["level_max_time"] - elapsed)
         screen.fill(black)
         buttons = draw_ui(
             screen,
@@ -451,15 +484,16 @@ but only {len(l_pacgum)} valid spawn locations available."
                     if pagman.player.lives >= 2:
                         pagman.player.lives -= 1
             if event.type == pygame.QUIT:
-                # return False
-                sys.exit()
-
-        # extra_screen.fill(black)
+                running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
+                return (False, running_stats)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    paused = not paused
 
         screen.blit(maze_surface, (0, 0))
-        # extra_screen.blit()
         pacgum_group.draw(screen)
         super_pacgum_group.draw(screen)
+        
         eaten = pygame.sprite.spritecollide(
             pagman.player,
             pacgum_group,
@@ -481,19 +515,132 @@ but only {len(l_pacgum)} valid spawn locations available."
             pagman.player.score_gain(config["points_per_pacgum"])
             if pagman.pacgum <= 0:
                 print("You win!")
-                # return True
-                sys.exit()
-        pacman_group.update(walls, current_time)
-        pacman_group.draw(screen)
-        ghost0_group.update(walls, pagman.player)
-        ghost0_group.draw(screen)
-        ghost1_group.update(walls, pagman.player)
-        ghost1_group.draw(screen)
-        ghost2_group.update(walls, pagman.player)
-        ghost2_group.draw(screen)
-        ghost3_group.update(walls, pagman.player)
-        ghost3_group.draw(screen)
+                running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
+                return (True, running_stats)
+
+        if not paused:
+            pacman_group.update(walls, current_time)
+            pacman_group.draw(screen)
+            ghost0_group.update(walls, pagman.player, pagman.ghosts)
+            ghost0_group.draw(screen)
+            ghost1_group.update(walls, pagman.player, pagman.ghosts)
+            ghost1_group.draw(screen)
+            ghost2_group.update(walls, pagman.player, pagman.ghosts)
+            ghost2_group.draw(screen)
+            ghost3_group.update(walls, pagman.player, pagman.ghosts)
+            ghost3_group.draw(screen)
+        else:
+            font = pygame.font.SysFont("Serif", 40, True)
+            text = font.render("PAUSED", True, (255, 255, 0))
+            screen.blit(text, (screen_x // 2 - text.get_width() // 2, screen_y // 2))
+
+        # Respawn do jogador e ecrã de espera caso tenha acabado de morrer
+        if pagman.player.just_died:
+            pagman.player.just_died = False
+            success, stats = wait_for_keypress("You died! Press any key to respawn")
+            if not success:
+                return False, stats
+
         pygame.display.flip()
+
+
+def game_start():
+    score = 0
+    pygame.init()
+    screen_x = 720
+    cell_x_size = screen_x/config["width"]
+    screen_y = 720
+    cell_y_size = screen_y/config["height"]
+    cell_x_size, cell_y_size = \
+        min(cell_x_size, cell_y_size), min(cell_x_size, cell_y_size)
+    window_x = 0
+    if pygame.display.Info().current_w > screen_x:
+        window_x = screen_x + 250
+    screen = pygame.display.set_mode((window_x, screen_y))
+    for level in range(config["level_cap"]):
+        completion = game(level, config, score, screen, screen_x, screen_y, cell_x_size, cell_y_size)
+        if completion[0] is True:
+            config["lives"] = completion[1]["lives"]
+            score = completion[1]["score"]
+            pass
+        else:
+            sys.exit()
+    leaderboard(config["highscore_filename"], score)
+
+
+def leaderboard(HS_file: str, score: int = 0):
+    pygame.init()
+    screen_x = 720
+    screen_y = 720
+    screen = pygame.display.set_mode((screen_x, screen_y))
+    font = pygame.font.SysFont("Serif", 40, True)
+    name = ""
+    finish_input = False
+    pygame.key.start_text_input()
+    if score != 0:
+        print("type name")
+        clock = pygame.time.Clock()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return
+                if event.type == pygame.TEXTINPUT:
+                    name += event.text
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        name = name[:-1]
+                    if event.key == pygame.K_RETURN:
+                        finish_input = True
+                    print(event.key)
+            screen.fill((0, 0, 0))
+            input_rect = pygame.Rect(20, 20, 300, 50)
+            pygame.draw.rect(screen, (255, 255, 255), input_rect, 2)
+            text_surface = font.render(name, True, (255, 255, 255))
+            screen.blit(text_surface, (30, 25))
+            if finish_input is True:
+                pygame.key.stop_text_input()
+                print(name)
+                screen.fill((0, 0, 0))
+                break
+            pygame.display.flip()
+            clock.tick(30)
+        with open(HS_file) as file:
+            # json.dump(data, file)
+            highscores = json.load(file)
+        highscores[name] = score
+        with open(HS_file, "w") as file:
+            json.dump(highscores, file, indent=4)
+        # pygame.key.start_text_input()
+        # pygame.key.set_text_input_rect((20, 20, 20, 20))
+        # pass
+    lines = []
+    with open(HS_file) as file:
+        for line in file:
+            if not line.lstrip().startswith("#"):
+                lines.append(line)
+    leaderboard = json.loads("".join(lines))
+
+    sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
+
+    num = 0
+    for player in sorted_leaderboard[0:10]:
+        # player_rect = pygame.Rect(screen_x/2 + 20, 130, 200, 40)
+        # pygame.draw.rect(screen, (50, 50, 50), player_rect)
+        player_name = font.render(f"{player[0]}", True, (255, 255, 255))
+        screen.blit(player_name, (screen_x/4, 135+num*45))
+        player_score = font.render(f"{player[1]}", True, (255, 255, 255))
+        screen.blit(player_score, (screen_x/2, 135+num*45))
+        num += 1
+    # freeze_btn = pygame.Rect(screen_x/2 + 20, 130, 200, 40)
+    # pygame.draw.rect(screen, (50, 50, 50), freeze_btn)
+    # freeze_text = font.render("Ghost Freeze", True, (255, 255, 255))
+    # screen.blit(freeze_text, (screen_x + 25, 135))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+        pygame.display.flip()
+        pass
 
 
 if __name__ == "__main__":
@@ -507,9 +654,6 @@ if __name__ == "__main__":
             if not line.lstrip().startswith("#"):
                 lines.append(line)
     config = json.loads("".join(lines))
-    # hex_lists = [[hex(x) for x in inner] for inner in maze_gen.maze]
-    # hex_lists2 = [[x.replace("0x", "") for x in hex] for hex in hex_lists]
-    # print(hex_lists2)
-    # print(config)
-    game(1, config)
+
+    game_start()
     sys.exit()
