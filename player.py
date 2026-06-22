@@ -120,8 +120,12 @@ class Player(pygame.sprite.Sprite):
             sys.exit()
         else:
             self.movement.pixel_x, self.movement.pixel_y = self.spawn
-            self.movement.grid_x = int(self.movement.pixel_x // self.cell_x_size)
-            self.movement.grid_y = int(self.movement.pixel_y // self.cell_y_size)
+            self.movement.grid_x = int(
+                self.movement.pixel_x // self.cell_x_size
+            )
+            self.movement.grid_y = int(
+                self.movement.pixel_y // self.cell_y_size
+            )
             self.movement.dir_x, self.movement.dir_y = 0, 0
             self.next_dir_x, self.next_dir_y = 0, 0
 

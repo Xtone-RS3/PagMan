@@ -8,7 +8,7 @@ from pygame.surface import Surface
 from pygame.rect import Rect
 
 
-class Ghost(pygame.sprite.Sprite):  # , ABC
+class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
     def __init__(
             self,
             spawn: tuple[float, float],
@@ -60,7 +60,7 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
         self.hitbox = self.rect.inflate(-28, -28)
 
     @abstractmethod
-    def update(self, walls: Any, player: Player) -> None:    
+    def update(self, walls: Any, player: Player) -> None:
         pass
 
     def eye_update(self) -> None:
@@ -95,8 +95,12 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
         if player.lives != -1:
             if self.rect.colliderect(player.rect):
                 self.movement.pixel_x, self.movement.pixel_y = self.spawn
-                self.movement.grid_x = int(self.movement.pixel_x // self.movement.cell_x_size)
-                self.movement.grid_y = int(self.movement.pixel_y // self.movement.cell_y_size)
+                self.movement.grid_x = int(
+                    self.movement.pixel_x // self.movement.cell_x_size
+                )
+                self.movement.grid_y = int(
+                    self.movement.pixel_y // self.movement.cell_y_size
+                )
                 self.movement.dir_x, self.movement.dir_y = 0, 0
                 player.death()
                 self.is_alive = False
@@ -177,7 +181,9 @@ class Ghost(pygame.sprite.Sprite):  # , ABC
             self.is_edible = False
             self.movement.speed = self.base_speed
 
-    def bfs(self, walls: Any, target: tuple[int, int]) -> tuple[int, int, List]:
+    def bfs(
+        self, walls: Any, target: tuple[int, int]
+    ) -> tuple[int, int, List]:
         start = (self.movement.grid_x, self.movement.grid_y)
         queue = [start]
         visited = {start}

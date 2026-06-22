@@ -7,7 +7,6 @@ import pygame
 from ghosts import redGhost, orangeGhost, pinkGhost, cyanGhost, Ghost
 from player import Player
 from pygame.surface import Surface
-from pygame.rect import Rect
 
 
 class Pacgum(pygame.sprite.Sprite):
@@ -16,7 +15,8 @@ class Pacgum(pygame.sprite.Sprite):
         self.image = pygame.image.load("gum1.png")
         self.rect = self.image.get_rect()
         self.rect.center = (int(x), int(y))
-        self.hitbox = self.rect.inflate(-28, -28)  # TODO divide cell size by a factor, 48 / x = 28
+        self.hitbox = self.rect.inflate(-28, -28)
+        # TODO divide cell size by a factor, 48 / x = 28
 
 
 class superPacgum(pygame.sprite.Sprite):
@@ -74,7 +74,9 @@ class PacMan:
         self.ghost_gen(cell_x_size, cell_y_size)
 
     def ghost_gen(self, cell_x_size: float, cell_y_size: float) -> None:
-        color_class = [redGhost, orangeGhost, pinkGhost, cyanGhost]
+        color_class: list[type[Ghost]] = [
+            redGhost, orangeGhost, pinkGhost, cyanGhost
+        ]
         color_list = ["red", "orange", "pink", "cyan"]
         for i, coords in enumerate(self.ghost_spawn):
             color = color_list[i]
@@ -123,7 +125,9 @@ def draw_ui(
 
     minutes = time_left // 60
     seconds = time_left % 60
-    timer_text = font.render(f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255))
+    timer_text = font.render(
+        f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255)
+    )
 
     freeze_btn = pygame.Rect(screen_x + 20, 130, 200, 40)
     pygame.draw.rect(screen, (50, 50, 50), freeze_btn)
@@ -145,7 +149,9 @@ def draw_ui(
 
     # ghost_speed_stat = pygame.Rect(screen_x + 30+105, 255, 20, 20)
     # pygame.draw.rect(screen, (50, 50, 50), ghost_speed_stat)
-    ghost_speed_stat_text = cheat_font.render(f"{ghost_speed}", True, (255, 255, 255))
+    ghost_speed_stat_text = cheat_font.render(
+        f"{ghost_speed}", True, (255, 255, 255)
+    )
     screen.blit(ghost_speed_stat_text, (screen_x + 65+105, 255))
 
     ghost_speed_plus = pygame.Rect(screen_x + 90+105, 255, 20, 20)
@@ -158,7 +164,12 @@ def draw_ui(
     screen.blit(timer_text, (screen_x + 20, 90))
     screen.blit(freeze_text, (screen_x + 25, 135))
 
-    return {"ghost_freeze": freeze_btn, "invencibility": invenci_btn, "ghost_speed_plus": ghost_speed_plus, "ghost_speed_minus": ghost_speed_minus}
+    return {
+        "ghost_freeze": freeze_btn,
+        "invencibility": invenci_btn,
+        "ghost_speed_plus": ghost_speed_plus,
+        "ghost_speed_minus": ghost_speed_minus
+    }
 
 
 def game(maze: MazeGenerator, config: dict) -> None:
@@ -175,7 +186,9 @@ def game(maze: MazeGenerator, config: dict) -> None:
         window_x = screen_x + 250
     screen = pygame.display.set_mode((window_x, screen_y))
     pygame.display.set_caption("Pac-Man")
-    maze_surface: pygame.Surface = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
+    maze_surface: pygame.Surface = pygame.Surface(
+        (screen_x, screen_y), pygame.SRCALPHA
+    )
     maze_surface.fill((0, 0, 0, 0))
     #  for the window size just do x*height y*width
     clock = pygame.time.Clock()
@@ -304,7 +317,8 @@ def game(maze: MazeGenerator, config: dict) -> None:
         cell_x_size,
         cell_y_size
     )
-    # pygame.display.set_caption(f"Pac-Man level: {level}")  # level is one of the args passed on game()
+    # pygame.display.set_caption(f"Pac-Man level: {level}")  # level is one of\
+    # the args passed on game()
     pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
     super_pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
     spwans = [(0, 0), (0, maze._height-1),
@@ -377,16 +391,24 @@ but only {len(l_pacgum)} valid spawn locations available."
         current_time = pygame.time.get_ticks()
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if buttons["ghost_freeze"].collidepoint(event.pos) and pagman.ghosts[0].frozen is False:
+                if buttons["ghost_freeze"].collidepoint(
+                    event.pos
+                ) and pagman.ghosts[0].frozen is False:
                     for ghost in pagman.ghosts:
                         ghost.frozen = True
-                elif buttons["ghost_freeze"].collidepoint(event.pos) and pagman.ghosts[0].frozen is True:
+                elif buttons["ghost_freeze"].collidepoint(
+                    event.pos
+                ) and pagman.ghosts[0].frozen is True:
                     for ghost in pagman.ghosts:
                         ghost.frozen = False
-                if buttons["invencibility"].collidepoint(event.pos) and pagman.player.lives != -1:
+                if buttons["invencibility"].collidepoint(
+                    event.pos
+                ) and pagman.player.lives != -1:
                     hold_lives = pagman.player.lives
                     pagman.player.lives = -1
-                elif buttons["invencibility"].collidepoint(event.pos) and pagman.player.lives == -1:
+                elif buttons["invencibility"].collidepoint(
+                    event.pos
+                ) and pagman.player.lives == -1:
                     if hold_lives == 0:
                         hold_lives = 3
                     pagman.player.lives = hold_lives
