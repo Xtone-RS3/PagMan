@@ -418,9 +418,17 @@ but only {len(l_pacgum)} valid spawn locations available."
                 config["level_max_time"],
                 screen_x,
                 screen_y,
-                pagman.ghosts[0].movement.speed
+                min(
+                    pagman.ghosts[0].movement.speed,
+                    pagman.ghosts[1].movement.speed,
+                    pagman.ghosts[2].movement.speed,
+                    pagman.ghosts[3].movement.speed
+                )
             )
             font = pygame.font.SysFont("Serif", 40, True)
+            text = font.render(f"Level: {level}", True, (255, 255, 0))
+            screen.blit(text, (screen_x // 2 - text.get_width() // 2, screen_y-900 // 2))
+            # TODO USE THESE .get_ methods to make main screen ui look better
             text = font.render(message, True, (255, 255, 0))
             screen.blit(text, (screen_x // 2 - text.get_width() // 2, screen_y // 2))
             pygame.display.flip()
@@ -454,7 +462,12 @@ but only {len(l_pacgum)} valid spawn locations available."
             time_left,
             screen_x,
             screen_y,
-            pagman.ghosts[0].movement.speed
+            min(
+                pagman.ghosts[0].movement.speed,
+                pagman.ghosts[1].movement.speed,
+                pagman.ghosts[2].movement.speed,
+                pagman.ghosts[3].movement.speed
+            )
         )
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -586,6 +599,7 @@ def game_start():
             score = completion[1]["score"]
         else:
             config["lives"] = base_lives
+            score = completion[1]["score"]
             leaderboard(config["highscore_filename"], score)
     leaderboard(config["highscore_filename"], score)
 
@@ -685,14 +699,14 @@ def instructions(screen):
         screen.fill((0, 0, 0))
         pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
         screen.blit(pagman_title, (140, 50))
-        pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 pass
-        instruction_text = font.render("Start Game", True, (255, 255, 255))
-        screen.blit(instruction_text, (255, 215))
+        instruction_text = font.render("Arrows -> Movement", True, (255, 255, 255))
+        screen.blit(instruction_text, (180, 350))
+        pygame.display.flip()
 
 
 def main_menu():
