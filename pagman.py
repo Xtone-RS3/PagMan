@@ -419,6 +419,8 @@ but only {len(l_pacgum)} valid spawn locations available."
                     running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
                     return False, running_stats
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        sys.exit()
                     waiting = False
         return True, {}
 
@@ -429,7 +431,7 @@ but only {len(l_pacgum)} valid spawn locations available."
     pagman.player.next_tick = pygame.time.get_ticks() + pagman.player.interval
     paused = False
     start_ticks = pygame.time.get_ticks()
-
+    PLAYER_DIED = pygame.event.custom_type()
     while True:
         clock.tick(30)
         if not paused:
@@ -490,11 +492,16 @@ but only {len(l_pacgum)} valid spawn locations available."
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     paused = not paused
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+            if event.type == PLAYER_DIED:
+                running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
+                return (False, running_stats)
 
         screen.blit(maze_surface, (0, 0))
         pacgum_group.draw(screen)
         super_pacgum_group.draw(screen)
-        
+
         eaten = pygame.sprite.spritecollide(
             pagman.player,
             pacgum_group,
@@ -540,7 +547,7 @@ but only {len(l_pacgum)} valid spawn locations available."
             pagman.player.just_died = False
             success, stats = wait_for_keypress("You died! Press any key to respawn")
             if not success:
-                return False, stats
+                return (False, stats)
             pagman.player.next_tick = pygame.time.get_ticks() + pagman.player.interval
 
         pygame.display.flip()
@@ -566,7 +573,7 @@ def game_start():
             score = completion[1]["score"]
             pass
         else:
-            sys.exit()
+            leaderboard(config["highscore_filename"], score)
     leaderboard(config["highscore_filename"], score)
 
 
@@ -579,6 +586,8 @@ def leaderboard(HS_file: str, score: int = 0):
     name = ""
     finish_input = False
     pygame.key.start_text_input()
+    valid_chars = "abcdefghijklmnopqrstuvwxyzAB\
+CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
     if score != 0:
         print("type name")
         clock = pygame.time.Clock()
@@ -586,35 +595,30 @@ def leaderboard(HS_file: str, score: int = 0):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return
-                if event.type == pygame.TEXTINPUT:
-                    name += event.text
+                if event.type == pygame.TEXTINPUT and len(name) < 10:
+                    if event.text in valid_chars:
+                        name += event.text
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE:
                         name = name[:-1]
                     if event.key == pygame.K_RETURN:
                         finish_input = True
-                    print(event.key)
             screen.fill((0, 0, 0))
-            input_rect = pygame.Rect(20, 20, 300, 50)
+            input_rect = pygame.Rect(250, 20, 210, 50)
             pygame.draw.rect(screen, (255, 255, 255), input_rect, 2)
-            text_surface = font.render(name, True, (255, 255, 255))
-            screen.blit(text_surface, (30, 25))
+            text_surface = font.render(name[:10], True, (255, 255, 255))
+            screen.blit(text_surface, (255, 25))
             if finish_input is True:
                 pygame.key.stop_text_input()
-                print(name)
                 screen.fill((0, 0, 0))
                 break
             pygame.display.flip()
             clock.tick(30)
         with open(HS_file) as file:
-            # json.dump(data, file)
             highscores = json.load(file)
         highscores[name] = score
         with open(HS_file, "w") as file:
             json.dump(highscores, file, indent=4)
-        # pygame.key.start_text_input()
-        # pygame.key.set_text_input_rect((20, 20, 20, 20))
-        # pass
     lines = []
     with open(HS_file) as file:
         for line in file:
@@ -626,23 +630,22 @@ def leaderboard(HS_file: str, score: int = 0):
 
     num = 0
     for player in sorted_leaderboard[0:10]:
-        # player_rect = pygame.Rect(screen_x/2 + 20, 130, 200, 40)
-        # pygame.draw.rect(screen, (50, 50, 50), player_rect)
         player_name = font.render(f"{player[0]}", True, (255, 255, 255))
-        screen.blit(player_name, (screen_x/4, 135+num*45))
+        screen.blit(player_name, (screen_x/4, 235+num*45))
         player_score = font.render(f"{player[1]}", True, (255, 255, 255))
-        screen.blit(player_score, (screen_x/2, 135+num*45))
+        screen.blit(player_score, (screen_x/2, 235+num*45))
         num += 1
-    # freeze_btn = pygame.Rect(screen_x/2 + 20, 130, 200, 40)
-    # pygame.draw.rect(screen, (50, 50, 50), freeze_btn)
-    # freeze_text = font.render("Ghost Freeze", True, (255, 255, 255))
-    # screen.blit(freeze_text, (screen_x + 25, 135))
     while True:
+        pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return
-        pygame.display.flip()
-        pass
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    pygame.quit()
+                    game_start()
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
 
 
 if __name__ == "__main__":
@@ -656,6 +659,19 @@ if __name__ == "__main__":
             if not line.lstrip().startswith("#"):
                 lines.append(line)
     config = json.loads("".join(lines))
-
+    # hex_lists = [[hex(x) for x in inner] for inner in maze_gen.maze]
+    # hex_lists2 = [[x.replace("0x", "") for x in hex] for hex in hex_lists]
+    # print(hex_lists2)
+    # print(config)
+    leaderboard(config["highscore_filename"])
+    # vvvvvvvvv GAME START vvvvvvvvvv
     game_start()
-    sys.exit()
+    # ^^^^^^^^ GAME START ^^^^^^^^
+
+    # vvvvvvv LEADERBOARD vvvvvvv
+    # pygame.init()
+    # screen_x = 720
+    # screen_y = 720
+    # leaderboard(config["highscore_filename"], 5000)
+
+    # ^^^^^^^ LEADERBOARD ^^^^^^^

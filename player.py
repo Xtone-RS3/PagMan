@@ -5,6 +5,9 @@ from movement import Movement
 from pygame.rect import Rect
 
 
+PLAYER_DIED = pygame.event.custom_type()
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(
             self,
@@ -119,7 +122,8 @@ class Player(pygame.sprite.Sprite):
         # death anim
         if self.lives == 0:
             # this should only end the game and boot the player to scoreboard
-            sys.exit()
+            pygame.event.post(pygame.event.Event(PLAYER_DIED))
+            # sys.exit()
         else:
             self.movement.pixel_x, self.movement.pixel_y = self.spawn
             self.movement.grid_x = int(
