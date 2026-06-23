@@ -660,6 +660,52 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
                     sys.exit()
 
 
+def main_menu():
+    pygame.init()
+    screen_x = 720
+    screen_y = 720
+    screen = pygame.display.set_mode((screen_x, screen_y))
+    font = pygame.font.SysFont("Serif", 40, True)
+    font_title = pygame.font.SysFont("Serif", 100, True)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                pass
+        screen.fill((0, 0, 0))
+        pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
+        screen.blit(pagman_title, (140, 50))
+        # ###
+        game_start_rect = pygame.Rect(250, 210, 210, 50)
+        pygame.draw.rect(screen, (255, 255, 255), game_start_rect, 2)
+        game_start_text = font.render("Start Game", True, (255, 255, 255))
+        screen.blit(game_start_text, (255, 215))
+        # ###
+        hs_rect = pygame.Rect(250, 310, 210, 50)
+        pygame.draw.rect(screen, (255, 255, 255), hs_rect, 2)
+        hs_text = font.render("HighScores", True, (255, 255, 255))
+        screen.blit(hs_text, (255, 315))
+        # ###
+        instructions_rect = pygame.Rect(250, 410, 210, 50)
+        pygame.draw.rect(screen, (255, 255, 255), instructions_rect, 2)
+        instructions_text = font.render("Instructions", True, (255, 255, 255))
+        screen.blit(instructions_text, (255, 415))
+        # ###
+        exit_rect = pygame.Rect(250, 510, 210, 50)
+        pygame.draw.rect(screen, (255, 255, 255), exit_rect, 2)
+        exit_text = font.render("Exit", True, (255, 255, 255))
+        screen.blit(exit_text, (255, 515))
+        # ###
+        pygame.display.flip()
+        return {
+            "game_start": game_start_rect,
+            "highscores": hs_rect,
+            "instructions": instructions_rect,
+            "exit": exit_rect
+        }
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
@@ -675,6 +721,7 @@ if __name__ == "__main__":
     # hex_lists2 = [[x.replace("0x", "") for x in hex] for hex in hex_lists]
     # print(hex_lists2)
     # print(config)
+    main_menu()
     leaderboard(config["highscore_filename"])
     # vvvvvvvvv GAME START vvvvvvvvvv
     # game_start()
