@@ -516,6 +516,10 @@ but only {len(l_pacgum)} valid spawn locations available."
                     paused = not paused
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
+                if event.key == pygame.K_SPACE:
+                    if paused:
+                        pygame.quit()
+                        main_menu()
             if event.type == player_died:
                 running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
                 return (False, running_stats)
@@ -561,8 +565,17 @@ but only {len(l_pacgum)} valid spawn locations available."
             ghost3_group.draw(screen)
         else:
             font = pygame.font.SysFont("Serif", 40, True)
-            text = font.render("PAUSED", True, (255, 255, 0))
-            screen.blit(text, (screen_x // 2 - text.get_width() // 2, screen_y // 2))
+            pacman_group.draw(screen)
+            ghost0_group.draw(screen)
+            ghost1_group.draw(screen)
+            ghost2_group.draw(screen)
+            ghost3_group.draw(screen)
+            pause_text = font.render("PAUSED", True, (255, 255, 0))
+            screen.blit(pause_text, (screen_x // 2 - pause_text.get_width() // 2, screen_y // 2))
+            unpause_instructions = font.render("Press P to resume", True, (255, 255, 0))
+            screen.blit(unpause_instructions, (screen_x // 2 - unpause_instructions.get_width() // 2, screen_y-900 // 2))  # TODO 1/3 of Y
+            menu_instructions = font.render("Press 'space' to Main Menu", True, (255, 255, 0))
+            screen.blit(menu_instructions, (screen_x // 2 - menu_instructions.get_width() // 2, screen_y-500 // 2))  # TODO 2/3 of Y
 
         # Respawn do jogador e ecrã de espera caso tenha acabado de morrer
         if pagman.player.just_died:
@@ -670,7 +683,7 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
     num = 0
     pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
     screen.blit(pagman_title, (140, 50))
-    press_space = font.render("Press 'space' to play", True, (255, 255, 255))
+    press_space = font.render("Press any key to Main Menu", True, (255, 255, 255))
     screen.blit(press_space, (210, 170))
     for player in sorted_leaderboard[0:10]:
         player_name = font.render(f"{player[0]}", True, (255, 255, 255))
@@ -685,8 +698,7 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    pygame.quit()
-                    game_start()
+                    main_menu(screen)
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
 
@@ -699,21 +711,27 @@ def instructions(screen):
         screen.fill((0, 0, 0))
         pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
         screen.blit(pagman_title, (140, 50))
+        press_space = font.render("Press any key to Main Menu", True, (255, 255, 255))
+        screen.blit(press_space, (210, 170))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                pass
+                if event.key == pygame.K_SPACE:
+                    main_menu(screen)
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
         instruction_text = font.render("Arrows -> Movement", True, (255, 255, 255))
         screen.blit(instruction_text, (180, 350))
         pygame.display.flip()
 
 
-def main_menu():
-    pygame.init()
-    screen_x = 720
-    screen_y = 720
-    screen = pygame.display.set_mode((screen_x, screen_y))
+def main_menu(screen: Surface = None):
+    if screen == None:
+        pygame.init()
+        screen_x = 720
+        screen_y = 720
+        screen = pygame.display.set_mode((screen_x, screen_y))
     font = pygame.font.SysFont("Serif", 40, True)
     font_title = pygame.font.SysFont("Serif", 100, True)
     while True:
@@ -757,7 +775,11 @@ def main_menu():
             if event.type == pygame.QUIT:
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                pass
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+                if event.key == pygame.K_SPACE:
+                    pygame.quit()
+                    game_start()
 
 
 if __name__ == "__main__":
