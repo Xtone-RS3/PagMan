@@ -5,9 +5,6 @@ from movement import Movement
 from pygame.rect import Rect
 
 
-PLAYER_DIED = pygame.event.custom_type()
-
-
 class Player(pygame.sprite.Sprite):
     def __init__(
             self,
@@ -15,7 +12,8 @@ class Player(pygame.sprite.Sprite):
             cell_x_size: float,
             cell_y_size: float,
             lives: int = 3,
-            score: int = 0
+            score: int = 0,
+            player_died: int = 32867
     ):
         super().__init__()
         self.spawn = (spawn)  # PacMan class
@@ -57,6 +55,7 @@ class Player(pygame.sprite.Sprite):
         )
         self.interval = 200
         self.next_tick = pygame.time.get_ticks() + self.interval
+        self.player_died = player_died
 
     def update_image(self) -> None:  # copy this exact logic for ghost eyes
         center = self.rect.center
@@ -122,7 +121,8 @@ class Player(pygame.sprite.Sprite):
         # death anim
         if self.lives == 0:
             # this should only end the game and boot the player to scoreboard
-            pygame.event.post(pygame.event.Event(PLAYER_DIED))
+            print("here")
+            pygame.event.post(pygame.event.Event(self.player_died))
             # sys.exit()
         else:
             self.movement.pixel_x, self.movement.pixel_y = self.spawn

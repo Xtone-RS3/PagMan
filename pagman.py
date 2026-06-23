@@ -16,7 +16,7 @@ class Pacgum(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (size, size))
         self.rect = self.image.get_rect()
         self.rect.center = (int(x), int(y))
-        self.hitbox = self.rect.inflate(-28, -28)
+        self.hitbox = self.rect.inflate(-28, -28)  # TODO addapt these with size
 
 
 class superPacgum(pygame.sprite.Sprite):
@@ -39,7 +39,8 @@ class PacMan:
             image_list: Dict[Any, Any],
             cell_x_size: float,
             cell_y_size: float,
-            score: int
+            score: int,
+            player_died: int
     ):
         self.maze: MazeGenerator = maze
         self.level_cap = config["level_cap"]
@@ -66,7 +67,8 @@ class PacMan:
         self.ghosts: List[Ghost] = []
         self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size,
                              cell_y_size=cell_y_size,
-                             lives=self.config["lives"], score=score)
+                             lives=self.config["lives"], score=score,
+                             player_died=player_died)
         self.pacgum = config["pacgum"]
         self.points_per_pacgum = config["points_per_pacgum"]
         self.points_per_super_pacgum = config["points_per_super_pacgum"]
@@ -159,7 +161,6 @@ def draw_ui(
     ghost_speed_plus_text = cheat_font.render("+", True, (255, 255, 255))
     screen.blit(ghost_speed_plus_text, (screen_x + 93+105, 255))
 
-    ##########################
     life_cheat_text = cheat_font.render("Life cheat", True, (255, 255, 255))
     screen.blit(life_cheat_text, (screen_x + 25, 280))
 
@@ -177,7 +178,6 @@ def draw_ui(
     pygame.draw.rect(screen, (50, 50, 50), life_cheat_plus)
     life_cheat_plus_text = cheat_font.render("+", True, (255, 255, 255))
     screen.blit(life_cheat_plus_text, (screen_x + 93+105, 280))
-    ##########################
 
     screen.blit(score_text, (screen_x + 20, 10))
     screen.blit(lives_text, (screen_x + 20, 50))
@@ -194,7 +194,7 @@ def draw_ui(
     }
 
 
-def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_x_size, cell_y_size) -> tuple[bool, Dict[str, int]]:
+def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_x_size, cell_y_size, player_died) -> tuple[bool, Dict[str, int]]:
     maze = MazeGenerator(
         seed=config["seed"] + level, size=(config["width"], config["height"])
     )
@@ -328,7 +328,8 @@ def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_
         image_list,
         cell_x_size,
         cell_y_size,
-        score
+        score,
+        player_died
     )
     pygame.display.set_caption(f"Pac-Man level: {level}")
     pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
@@ -390,7 +391,6 @@ but only {len(l_pacgum)} valid spawn locations available."
 
     def wait_for_keypress(message="Press any key to start"):
         waiting = True
-        
         while waiting:
             screen.fill(black)
             screen.blit(maze_surface, (0, 0))
@@ -422,7 +422,7 @@ but only {len(l_pacgum)} valid spawn locations available."
                     if event.key == pygame.K_ESCAPE:
                         sys.exit()
                     waiting = False
-        return True, {}
+        return (True, {})  # TODO is this correct?
 
     success, stats = wait_for_keypress()
     if not success:
@@ -431,7 +431,6 @@ but only {len(l_pacgum)} valid spawn locations available."
     pagman.player.next_tick = pygame.time.get_ticks() + pagman.player.interval
     paused = False
     start_ticks = pygame.time.get_ticks()
-    PLAYER_DIED = pygame.event.custom_type()
     while True:
         clock.tick(30)
         if not paused:
@@ -494,7 +493,7 @@ but only {len(l_pacgum)} valid spawn locations available."
                     paused = not paused
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
-            if event.type == PLAYER_DIED:
+            if event.type == player_died:
                 running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
                 return (False, running_stats)
 
@@ -556,6 +555,7 @@ but only {len(l_pacgum)} valid spawn locations available."
 def game_start():
     score = 0
     pygame.init()
+    PLAYER_DIED = pygame.event.custom_type()
     screen_x = 720
     cell_x_size = screen_x/config["width"]
     screen_y = 720
@@ -567,7 +567,7 @@ def game_start():
         window_x = screen_x + 250
     screen = pygame.display.set_mode((window_x, screen_y))
     for level in range(config["level_cap"]):
-        completion = game(level, config, score, screen, screen_x, screen_y, cell_x_size, cell_y_size)
+        completion = game(level, config, score, screen, screen_x, screen_y, cell_x_size, cell_y_size, PLAYER_DIED)
         if completion[0] is True:
             config["lives"] = completion[1]["lives"]
             score = completion[1]["score"]
@@ -594,7 +594,7 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    return
+                    sys.exit()
                 if event.type == pygame.TEXTINPUT and len(name) < 10:
                     if event.text in valid_chars:
                         name += event.text
@@ -665,7 +665,7 @@ if __name__ == "__main__":
     # print(config)
     leaderboard(config["highscore_filename"])
     # vvvvvvvvv GAME START vvvvvvvvvv
-    game_start()
+    # game_start()
     # ^^^^^^^^ GAME START ^^^^^^^^
 
     # vvvvvvv LEADERBOARD vvvvvvv
