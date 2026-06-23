@@ -566,13 +566,14 @@ def game_start():
     if pygame.display.Info().current_w > screen_x:
         window_x = screen_x + 250
     screen = pygame.display.set_mode((window_x, screen_y))
+    base_lives = config["lives"]
     for level in range(config["level_cap"]):
         completion = game(level, config, score, screen, screen_x, screen_y, cell_x_size, cell_y_size, PLAYER_DIED)
         if completion[0] is True:
             config["lives"] = completion[1]["lives"]
             score = completion[1]["score"]
-            pass
         else:
+            config["lives"] = base_lives
             leaderboard(config["highscore_filename"], score)
     leaderboard(config["highscore_filename"], score)
 
@@ -583,6 +584,7 @@ def leaderboard(HS_file: str, score: int = 0):
     screen_y = 720
     screen = pygame.display.set_mode((screen_x, screen_y))
     font = pygame.font.SysFont("Serif", 40, True)
+    font_title = pygame.font.SysFont("Serif", 100, True)
     name = ""
     finish_input = False
     pygame.key.start_text_input()
@@ -604,10 +606,12 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
                     if event.key == pygame.K_RETURN:
                         finish_input = True
             screen.fill((0, 0, 0))
-            input_rect = pygame.Rect(250, 20, 210, 50)
+            pagman_title = font_title.render("PAG-MAN", True, (255, 255, 255))
+            screen.blit(pagman_title, (250, 50))
+            input_rect = pygame.Rect(250, 330, 210, 50)
             pygame.draw.rect(screen, (255, 255, 255), input_rect, 2)
             text_surface = font.render(name[:10], True, (255, 255, 255))
-            screen.blit(text_surface, (255, 25))
+            screen.blit(text_surface, (255, 335))
             if finish_input is True:
                 pygame.key.stop_text_input()
                 screen.fill((0, 0, 0))
