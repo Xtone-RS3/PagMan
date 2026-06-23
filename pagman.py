@@ -590,11 +590,17 @@ def game_start():
     leaderboard(config["highscore_filename"], score)
 
 
-def leaderboard(HS_file: str, score: int = 0):
+def leaderboard(HS_file: str, score: int = 0, screen: Surface=None):
     pygame.init()
-    screen_x = 720
-    screen_y = 720
-    screen = pygame.display.set_mode((screen_x, screen_y))
+    
+    if screen == None:
+        screen_x = 720
+        screen_y = 720
+        screen = pygame.display.set_mode((screen_x, screen_y))
+    else:
+        screen.fill((0, 0, 0))
+        screen_x = screen.get_width()
+        screen_y = screen.get_height()
     font = pygame.font.SysFont("Serif", 40, True)
     font_title = pygame.font.SysFont("Serif", 100, True)
     name = ""
@@ -603,7 +609,6 @@ def leaderboard(HS_file: str, score: int = 0):
     valid_chars = "abcdefghijklmnopqrstuvwxyzAB\
 CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
     if score != 0:
-        print("type name")
         clock = pygame.time.Clock()
         while True:
             for event in pygame.event.get():
@@ -672,6 +677,24 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
                     sys.exit()
 
 
+def instructions(screen):
+    pygame.init()
+    font = pygame.font.SysFont("Serif", 40, True)
+    font_title = pygame.font.SysFont("Serif", 100, True)
+    while True:
+        screen.fill((0, 0, 0))
+        pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
+        screen.blit(pagman_title, (140, 50))
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                pass
+        instruction_text = font.render("Start Game", True, (255, 255, 255))
+        screen.blit(instruction_text, (255, 215))
+
+
 def main_menu():
     pygame.init()
     screen_x = 720
@@ -711,9 +734,9 @@ def main_menu():
                     pygame.quit()
                     game_start()
                 if hs_rect.collidepoint(event.pos):
-                    leaderboard(config["highscore_filename"])
-                # ins
-                # ins
+                    leaderboard(config["highscore_filename"], screen=screen)
+                if instructions_rect.collidepoint(event.pos):
+                    instructions(screen)
                 if exit_rect.collidepoint(event.pos):
                     pygame.quit()
                     sys.exit()
