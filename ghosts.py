@@ -288,7 +288,8 @@ class orangeGhost(Ghost):
         else:
             self.movement.speed = self.base_speed
         if self.is_edible is False and self.is_alive is True:
-            self.death_routine(player, ghosts)
+            if not self.frozen:
+                self.death_routine(player, ghosts)
             next_dir_x = 0
             next_dir_y = 0
 
@@ -340,7 +341,8 @@ class pinkGhost(Ghost):
             self.movement.speed = self.base_speed
         self.eye_update()
         if self.is_edible is False and self.is_alive is True:
-            self.death_routine(player, ghosts)
+            if not self.frozen:
+                self.death_routine(player, ghosts)
             spawn_grid = (
                 int(self.spawn[0] // self.movement.cell_x_size),
                 int(self.spawn[1] // self.movement.cell_y_size)
@@ -385,7 +387,8 @@ class cyanGhost(Ghost):
         else:
             self.movement.speed = self.base_speed
         if self.is_edible is False and self.is_alive is True:
-            self.death_routine(player, ghosts)
+            if not self.frozen:
+                self.death_routine(player, ghosts)
             if player.movement.dir_x == 0 and player.movement.dir_y == 0:
                 next_dir_x, next_dir_y = 0, 0
             else:

@@ -606,8 +606,12 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
                     if event.key == pygame.K_RETURN:
                         finish_input = True
             screen.fill((0, 0, 0))
-            pagman_title = font_title.render("PAG-MAN", True, (255, 255, 255))
-            screen.blit(pagman_title, (250, 50))
+            pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
+            screen.blit(pagman_title, (140, 50))
+            score_line = font.render(f"Score: {score}", True, (255, 255, 255))
+            screen.blit(score_line, (275, 265))
+            type_here = font.render("Write your name", True, (255, 255, 255))
+            screen.blit(type_here, (210, 430))
             input_rect = pygame.Rect(250, 330, 210, 50)
             pygame.draw.rect(screen, (255, 255, 255), input_rect, 2)
             text_surface = font.render(name[:10], True, (255, 255, 255))
@@ -633,6 +637,10 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
     sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
 
     num = 0
+    pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
+    screen.blit(pagman_title, (140, 50))
+    press_space = font.render("Press 'space' to play", True, (255, 255, 255))
+    screen.blit(press_space, (210, 170))
     for player in sorted_leaderboard[0:10]:
         player_name = font.render(f"{player[0]}", True, (255, 255, 255))
         screen.blit(player_name, (screen_x/4, 235+num*45))
