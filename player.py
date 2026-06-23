@@ -13,7 +13,9 @@ class Player(pygame.sprite.Sprite):
             cell_y_size: float,
             lives: int = 3,
             score: int = 0,
-            player_died: int = 32867
+            player_died: int = 32867,
+            maze_offset_x: float = 0,
+            maze_offset_y: float = 0
     ):
         super().__init__()
         self.spawn = (spawn)  # PacMan class
@@ -51,7 +53,9 @@ class Player(pygame.sprite.Sprite):
             cell_x_size,
             cell_y_size,
             spawn,
-            speed=5
+            5,
+            maze_offset_x,
+            maze_offset_y
         )
         self.interval = 200
         self.next_tick = pygame.time.get_ticks() + self.interval
@@ -83,8 +87,8 @@ class Player(pygame.sprite.Sprite):
     @property
     def grid_pos(self) -> tuple[int, int]:
         return (
-            int(self.movement.pixel_x // self.cell_x_size),
-            int(self.movement.pixel_y // self.cell_y_size)
+            int((self.movement.pixel_x - self.movement.maze_offset_x) // self.cell_x_size),
+            int((self.movement.pixel_y - self.movement.maze_offset_y) // self.cell_y_size)
         )
 
     def update(self, walls: Any, current_time: int) -> None:
@@ -127,10 +131,10 @@ class Player(pygame.sprite.Sprite):
         else:
             self.movement.pixel_x, self.movement.pixel_y = self.spawn
             self.movement.grid_x = int(
-                self.movement.pixel_x // self.cell_x_size
+                (self.movement.pixel_x - self.movement.maze_offset_x) // self.cell_x_size
             )
             self.movement.grid_y = int(
-                self.movement.pixel_y // self.cell_y_size
+                (self.movement.pixel_y - self.movement.maze_offset_y) // self.cell_y_size
             )
             self.movement.dir_x, self.movement.dir_y = 0, 0
             self.next_dir_x, self.next_dir_y = 0, 0

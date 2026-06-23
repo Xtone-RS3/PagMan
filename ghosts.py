@@ -15,15 +15,17 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
             color: str,
             images: List[Surface],
             cell_x_size: float,
-            cell_y_size: float
+            cell_y_size: float,
+            maze_offset_x: float = 0,
+            maze_offset_y: float = 0
     ):
         super().__init__()
         self.is_alive = True
         self.is_edible = False
         self.spawn = spawn  # [x, y]
         self.spawn_coords = (
-            int(self.spawn[0] // cell_x_size),
-            int(self.spawn[1] // cell_y_size)
+            int((self.spawn[0] - maze_offset_x) // cell_x_size),
+            int((self.spawn[1] - maze_offset_y) // cell_y_size)
         )
         self.color = color
         self.position = spawn
@@ -55,7 +57,9 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
             cell_x_size,
             cell_y_size,
             spawn,
-            speed=self.base_speed
+            speed=self.base_speed,
+            maze_offset_x=maze_offset_x,
+            maze_offset_y=maze_offset_y
         )
         self.hitbox = self.rect.inflate(-28, -28)
         self.eye_update()
@@ -98,10 +102,10 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
                 for ghost in ghosts:
                     ghost.movement.pixel_x, ghost.movement.pixel_y = ghost.spawn
                     ghost.movement.grid_x = int(
-                        ghost.movement.pixel_x // ghost.movement.cell_x_size
+                        (ghost.movement.pixel_x - ghost.movement.maze_offset_x) // ghost.movement.cell_x_size
                     )
                     ghost.movement.grid_y = int(
-                        ghost.movement.pixel_y // ghost.movement.cell_y_size
+                        (ghost.movement.pixel_y - ghost.movement.maze_offset_y) // ghost.movement.cell_y_size
                     )
                     ghost.movement.dir_x, ghost.movement.dir_y = 0, 0
                     ghost.rect.center = (int(ghost.movement.pixel_x),
@@ -230,7 +234,9 @@ class redGhost(Ghost):
             color: str,
             images: List[Surface],
             cell_x_size: float,
-            cell_y_size: float
+            cell_y_size: float,
+            maze_offset_x: float = 0,
+            maze_offset_y: float = 0
     ):
         super().__init__(
             spawn,
@@ -238,6 +244,8 @@ class redGhost(Ghost):
             images,
             cell_x_size,
             cell_y_size,
+            maze_offset_x,
+            maze_offset_y
         )
 
     def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
@@ -270,7 +278,9 @@ class orangeGhost(Ghost):
             color: str,
             images: List[Surface],
             cell_x_size: float,
-            cell_y_size: float
+            cell_y_size: float,
+            maze_offset_x: float = 0,
+            maze_offset_y: float = 0
     ):
         super().__init__(
             spawn,
@@ -278,6 +288,8 @@ class orangeGhost(Ghost):
             images,
             cell_x_size,
             cell_y_size,
+            maze_offset_x,
+            maze_offset_y
         )
 
     def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
@@ -323,7 +335,9 @@ class pinkGhost(Ghost):
             color: str,
             images: List[Surface],
             cell_x_size: float,
-            cell_y_size: float
+            cell_y_size: float,
+            maze_offset_x: float = 0,
+            maze_offset_y: float = 0
     ):
         super().__init__(
             spawn,
@@ -331,6 +345,8 @@ class pinkGhost(Ghost):
             images,
             cell_x_size,
             cell_y_size,
+            maze_offset_x,
+            maze_offset_y
         )
 
     def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
@@ -344,8 +360,8 @@ class pinkGhost(Ghost):
             if not self.frozen:
                 self.death_routine(player, ghosts)
             spawn_grid = (
-                int(self.spawn[0] // self.movement.cell_x_size),
-                int(self.spawn[1] // self.movement.cell_y_size)
+                int((self.spawn[0] - self.movement.maze_offset_x) // self.movement.cell_x_size),
+                int((self.spawn[1] - self.movement.maze_offset_y) // self.movement.cell_y_size)
             )
             next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
             if len(path) <= 8:
@@ -369,7 +385,9 @@ class cyanGhost(Ghost):
             color: str,
             images: List[Surface],
             cell_x_size: float,
-            cell_y_size: float
+            cell_y_size: float,
+            maze_offset_x: float = 0,
+            maze_offset_y: float = 0
     ):
         super().__init__(
             spawn,
@@ -377,6 +395,8 @@ class cyanGhost(Ghost):
             images,
             cell_x_size,
             cell_y_size,
+            maze_offset_x,
+            maze_offset_y
         )
 
     def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:

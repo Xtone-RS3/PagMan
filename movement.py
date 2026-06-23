@@ -7,20 +7,25 @@ class Movement():
             cell_x_size: float,
             cell_y_size: float,
             spawn: tuple[float, float],
-            speed: int
+            speed: int,
+            maze_offset_x: float,
+            maze_offset_y: float
     ):
+        self.maze_offset_x = maze_offset_x
+        self.maze_offset_y = maze_offset_y
         self.cell_x_size = cell_x_size  # needed?
         self.cell_y_size = cell_y_size
         self.pixel_x, self.pixel_y = spawn
-
-        self.grid_x = int(self.pixel_x // cell_x_size)
-        self.grid_y = int(self.pixel_y // cell_y_size)
+        # how do i receive maze_offset_x and maze_offset_y here? i need to assume the new maze offset when calculating the grid position of the player
+        # answer: you can pass them as parameters to the Movement constructor
 
         self.dir_x = 0
         self.dir_y = 0
         self.next_dir_x = 0
         self.next_dir_y = 0
         self.speed = speed
+        self.grid_x = int((self.pixel_x - maze_offset_x) // cell_x_size)
+        self.grid_y = int((self.pixel_y - maze_offset_y) // cell_y_size)
 
     def can_move(
             self, walls: Any, col: Any, row: Any, dx: Any, dy: Any
@@ -44,8 +49,8 @@ class Movement():
     ) -> tuple[int, int]:
         self.next_dir_x, self.next_dir_y = next_dir_x, next_dir_y
         # Calculate the center pixel of the current grid cell
-        target_pixel_x = self.grid_x * self.cell_x_size + self.cell_x_size / 2
-        target_pixel_y = self.grid_y * self.cell_y_size + self.cell_y_size / 2
+        target_pixel_x = self.grid_x * self.cell_x_size + self.cell_x_size / 2 + self.maze_offset_x
+        target_pixel_y = self.grid_y * self.cell_y_size + self.cell_y_size / 2 + self.maze_offset_y
 
         # Check if we are at the center of the current cell
         if (abs(self.pixel_x - target_pixel_x) <= self.speed and

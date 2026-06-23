@@ -40,35 +40,41 @@ class PacMan:
             cell_x_size: float,
             cell_y_size: float,
             score: int,
-            player_died: int
+            player_died: int,
+            maze_offset_x: float,
+            maze_offset_y: float
     ):
+        self.maze_offset_x = maze_offset_x
+        self.maze_offset_y = maze_offset_y
         self.maze: MazeGenerator = maze
         self.level_cap = config["level_cap"]
         self.config = config
         self.ghost_spawn = [
             (
-                0 * cell_x_size + cell_x_size / 2,
-                0 * cell_y_size + cell_y_size / 2
+                0 * cell_x_size + cell_x_size / 2 + maze_offset_x,
+                0 * cell_y_size + cell_y_size / 2 + maze_offset_y
             ),
             (
-                (config["width"]-1) * cell_x_size + cell_x_size / 2,
-                (config["height"]-1) * cell_y_size + cell_y_size / 2
+                (config["width"]-1) * cell_x_size + cell_x_size / 2 + maze_offset_x,
+                (config["height"]-1) * cell_y_size + cell_y_size / 2 + maze_offset_y
             ),
             (
-                0 * cell_x_size + cell_x_size / 2,
-                (config["height"]-1) * cell_y_size + cell_y_size / 2
+                0 * cell_x_size + cell_x_size / 2 + maze_offset_x,
+                (config["height"]-1) * cell_y_size + cell_y_size / 2 + maze_offset_y
             ),
             (
-                (config["width"]-1) * cell_x_size + cell_x_size / 2,
-                0 * cell_y_size + cell_y_size / 2
+                (config["width"]-1) * cell_x_size + cell_x_size / 2 + maze_offset_x,
+                0 * cell_y_size + cell_y_size / 2 + maze_offset_y
             )
         ]
 
         self.ghosts: List[Ghost] = []
-        self.player = Player(spawn=(spawn_x, spawn_y), cell_x_size=cell_x_size,
-                             cell_y_size=cell_y_size,
-                             lives=self.config["lives"], score=score,
-                             player_died=player_died)
+        # how do i get maze_offset_x and maze_offset_y here? i need them to spawn the player in the middle of the maze
+        # answer: you can pass them as parameters to the PacMan constructor
+        self.player = Player((spawn_x, spawn_y), cell_x_size,
+                             cell_y_size,
+                             self.config["lives"], score,
+                             player_died, maze_offset_x, maze_offset_y)
         self.pacgum = config["pacgum"]
         self.points_per_pacgum = config["points_per_pacgum"]
         self.points_per_super_pacgum = config["points_per_super_pacgum"]
@@ -97,7 +103,9 @@ class PacMan:
                         self.image_list["dead"]
                     ],
                     cell_x_size=cell_x_size,
-                    cell_y_size=cell_y_size
+                    cell_y_size=cell_y_size,
+                    maze_offset_x=self.maze_offset_x,
+                    maze_offset_y=self.maze_offset_y
                 )
             )
 
@@ -194,7 +202,7 @@ def draw_ui(
     }
 
 
-def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_x_size, cell_y_size, player_died) -> tuple[bool, Dict[str, int]]:
+def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_x_size, cell_y_size, player_died, maze_offset_x, maze_offset_y) -> tuple[bool, Dict[str, int]]:
     maze = MazeGenerator(
         seed=config["seed"] + level, size=(config["width"], config["height"])
     )
@@ -224,8 +232,8 @@ def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_
         curr_x = 0
         while curr_x < len(walls[curr_y]):
             cell: str = walls[curr_y][curr_x]
-            px = cell_x_size * curr_x
-            py = cell_y_size * curr_y
+            px = cell_x_size * curr_x + maze_offset_x
+            py = cell_y_size * curr_y + maze_offset_y
 
             if maze.maze[curr_y][curr_x] == 15:
                 pygame.draw.rect(
@@ -247,10 +255,10 @@ def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_
                 curr_x += 1
                 continue
             if cell[3] == "1":  # North
-                start_x = 0+cell_x_size*curr_x
-                start_y = 0+cell_y_size*curr_y
-                end_x = cell_x_size+cell_x_size*curr_x
-                end_y = 0+cell_y_size*curr_y
+                start_x = 0+cell_x_size*curr_x + maze_offset_x
+                start_y = 0+cell_y_size*curr_y + maze_offset_y
+                end_x = cell_x_size+cell_x_size*curr_x + maze_offset_x
+                end_y = 0+cell_y_size*curr_y + maze_offset_y
                 wall_collision.append(((start_x, start_y), (end_x, end_y)))
                 pygame.draw.line(
                     maze_surface,
@@ -260,10 +268,10 @@ def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_
                     wall_width
                 )
             if cell[2] == "1":  # East
-                start_x = cell_x_size+cell_x_size*curr_x
-                start_y = cell_y_size+cell_y_size*curr_y
-                end_x = cell_x_size+cell_x_size*curr_x
-                end_y = 0+cell_y_size*curr_y
+                start_x = cell_x_size+cell_x_size*curr_x + maze_offset_x
+                start_y = cell_y_size+cell_y_size*curr_y + maze_offset_y
+                end_x = cell_x_size+cell_x_size*curr_x + maze_offset_x
+                end_y = 0+cell_y_size*curr_y + maze_offset_y
                 wall_collision.append(((start_x, start_y), (end_x, end_y)))
                 pygame.draw.line(
                     maze_surface,
@@ -273,10 +281,10 @@ def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_
                     wall_width
                 )
             if cell[1] == "1":  # South
-                start_x = cell_x_size+cell_x_size*curr_x
-                start_y = cell_y_size+cell_y_size*curr_y
-                end_x = 0+cell_x_size*curr_x
-                end_y = cell_y_size+cell_y_size*curr_y
+                start_x = cell_x_size+cell_x_size*curr_x + maze_offset_x
+                start_y = cell_y_size+cell_y_size*curr_y + maze_offset_y
+                end_x = 0+cell_x_size*curr_x + maze_offset_x
+                end_y = cell_y_size+cell_y_size*curr_y + maze_offset_y
                 wall_collision.append(((start_x, start_y), (end_x, end_y)))
                 pygame.draw.line(
                     maze_surface,
@@ -286,10 +294,10 @@ def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_
                     wall_width
                 )
             if cell[0] == "1":  # West
-                start_x = 0+cell_x_size*curr_x
-                start_y = 0+cell_y_size*curr_y
-                end_x = 0+cell_x_size*curr_x
-                end_y = cell_y_size+cell_y_size*curr_y
+                start_x = 0+cell_x_size*curr_x + maze_offset_x
+                start_y = 0+cell_y_size*curr_y + maze_offset_y
+                end_x = 0+cell_x_size*curr_x + maze_offset_x
+                end_y = cell_y_size+cell_y_size*curr_y + maze_offset_y
                 wall_collision.append(((start_x, start_y), (end_x, end_y)))
                 pygame.draw.line(
                     maze_surface,
@@ -323,13 +331,15 @@ def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_
     pagman = PacMan(
         maze,
         config,
-        spawn_x,
-        spawn_y,
+        spawn_x + maze_offset_x,
+        spawn_y + maze_offset_y,
         image_list,
         cell_x_size,
         cell_y_size,
         score,
-        player_died
+        player_died,
+        maze_offset_x,
+        maze_offset_y
     )
     pygame.display.set_caption(f"Pac-Man level: {level}")
     pacgum_group: pygame.sprite.Group = pygame.sprite.Group()
@@ -342,8 +352,8 @@ def game(level: int, config: dict, score: int, screen, screen_x, screen_y, cell_
         for col in range(maze._width):
             gum_spawn = maze.maze[row][col]
             if gum_spawn != 15 and (col, row) not in spwans:
-                cx = col * cell_x_size + cell_x_size / 2
-                cy = row * cell_y_size + cell_y_size / 2
+                cx = col * cell_x_size + cell_x_size / 2 + maze_offset_x
+                cy = row * cell_y_size + cell_y_size / 2 + maze_offset_y
                 l_pacgum.append((cx, cy))
     if len(l_pacgum) < config["pacgum"]:
         print(
@@ -359,18 +369,18 @@ but only {len(l_pacgum)} valid spawn locations available."
         pacgum_group.add(Pacgum(spawn[0], spawn[1], size))
     super_spawns = []
     super_spawns.append(
-        (cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2)
+        (cell_x_size / 2 + maze_offset_x, cell_y_size * mid_row + cell_y_size / 2 + maze_offset_y)
     )
     super_spawns.append(
-        (cell_x_size * mid_col + cell_x_size / 2, cell_y_size / 2)
+        (cell_x_size * mid_col + cell_x_size / 2 + maze_offset_x, cell_y_size / 2 + maze_offset_y)
     )
     super_spawns.append(
-        (cell_x_size * mid_col + cell_x_size / 2,
-         cell_y_size * (maze._height - 1) + cell_y_size / 2)
+        (cell_x_size * mid_col + cell_x_size / 2 + maze_offset_x,
+         cell_y_size * (maze._height - 1) + cell_y_size / 2 + maze_offset_y)
     )
     super_spawns.append(
-        (cell_x_size * (maze._width - 1) + cell_x_size / 2,
-         cell_y_size * mid_row + cell_y_size / 2)
+        (cell_x_size * (maze._width - 1) + cell_x_size / 2 + maze_offset_x,
+         cell_y_size * mid_row + cell_y_size / 2 + maze_offset_y)
     )
     for spawn in super_spawns:
         if spawn in spwans:
@@ -562,13 +572,15 @@ def game_start():
     cell_y_size = screen_y/config["height"]
     cell_x_size, cell_y_size = \
         min(cell_x_size, cell_y_size), min(cell_x_size, cell_y_size)
+    maze_offset_x = int((screen_x - cell_x_size * config["width"]) // 2)
+    maze_offset_y = int((screen_y - cell_y_size * config["height"]) // 2)
     window_x = 0
     if pygame.display.Info().current_w > screen_x:
         window_x = screen_x + 250
     screen = pygame.display.set_mode((window_x, screen_y))
     base_lives = config["lives"]
     for level in range(config["level_cap"]):
-        completion = game(level, config, score, screen, screen_x, screen_y, cell_x_size, cell_y_size, PLAYER_DIED)
+        completion = game(level, config, score, screen, screen_x, screen_y, cell_x_size, cell_y_size, PLAYER_DIED, maze_offset_x, maze_offset_y)
         if completion[0] is True:
             config["lives"] = completion[1]["lives"]
             score = completion[1]["score"]
