@@ -117,7 +117,9 @@ def draw_ui(
         time_left: int,
         screen_x: int,
         screen_y: int,
-        ghost_speed: int
+        ghost_speed: int,
+        player: Player,
+        level: int
 ) -> Dict[str, pygame.Rect]:
     font = pygame.font.SysFont("Serif", 40, True)
     cheat_font = pygame.font.SysFont("Serif", 20, True)
@@ -129,7 +131,7 @@ def draw_ui(
     life_icon = pygame.image.load("PagMan.png")
     if lives <= 3 and lives > 0:
         for i in range(lives):
-            screen.blit(life_icon, (screen_x + 109 + i * 40, 50))
+            screen.blit(life_icon, (screen_x + 129 + i * 40, 55))
     elif lives == -1:
         lives_text = font.render("Lives: ∞", True, (255, 255, 255))
     else:
@@ -146,10 +148,10 @@ def draw_ui(
     freeze_text = font.render("Ghost Freeze", True, (255, 255, 255))
     screen.blit(freeze_text, (screen_x + 25, 135))
 
-    invenci_btn = pygame.Rect(screen_x + 20, 190, 200, 40)
-    pygame.draw.rect(screen, (50, 50, 50), invenci_btn)
-    invenci_text = font.render("Invencibility", True, (255, 255, 255))
-    screen.blit(invenci_text, (screen_x + 25, 195))
+    invinci_btn = pygame.Rect(screen_x + 20, 190, 200, 40)
+    pygame.draw.rect(screen, (50, 50, 50), invinci_btn)
+    invinci_text = font.render("invincibility", True, (255, 255, 255))
+    screen.blit(invinci_text, (screen_x + 25, 195))
 
     ghost_speed_text = cheat_font.render("Ghost Speed", True, (255, 255, 255))
     screen.blit(ghost_speed_text, (screen_x + 25, 255))
@@ -187,6 +189,45 @@ def draw_ui(
     life_cheat_plus_text = cheat_font.render("+", True, (255, 255, 255))
     screen.blit(life_cheat_plus_text, (screen_x + 93+105, 280))
 
+    # ###
+    self_speed_text = cheat_font.render("Player speed", True, (255, 255, 255))
+    screen.blit(self_speed_text, (screen_x + 25, 305))
+
+    self_speed_minus = pygame.Rect(screen_x + 30+105, 305, 20, 20)
+    pygame.draw.rect(screen, (50, 50, 50), self_speed_minus)
+    self_speed_minus_text = cheat_font.render("-", True, (255, 255, 255))
+    screen.blit(self_speed_minus_text, (screen_x + 36+105, 305))
+
+    self_speed_stat_text = cheat_font.render(
+        f"{player.movement.speed}", True, (255, 255, 255)
+    )
+    screen.blit(self_speed_stat_text, (screen_x + 65+105, 305))
+
+    self_speed_plus = pygame.Rect(screen_x + 90+105, 305, 20, 20)
+    pygame.draw.rect(screen, (50, 50, 50), self_speed_plus)
+    self_speed_plus_text = cheat_font.render("+", True, (255, 255, 255))
+    screen.blit(self_speed_plus_text, (screen_x + 93+105, 305))
+
+    # ###
+    level_skip_text = cheat_font.render("Level skip", True, (255, 255, 255))
+    screen.blit(level_skip_text, (screen_x + 25, 330))
+
+    level_skip_minus = pygame.Rect(screen_x + 30+105, 330, 20, 20)
+    pygame.draw.rect(screen, (50, 50, 50), level_skip_minus)
+    level_skip_minus_text = cheat_font.render("-", True, (255, 255, 255))
+    screen.blit(level_skip_minus_text, (screen_x + 36+105, 330))
+
+    level_skip_stat_text = cheat_font.render(
+        f"{level}", True, (255, 255, 255)
+    )
+    screen.blit(level_skip_stat_text, (screen_x + 65+105, 330))
+
+    level_skip_plus = pygame.Rect(screen_x + 90+105, 330, 20, 20)
+    pygame.draw.rect(screen, (50, 50, 50), level_skip_plus)
+    level_skip_plus_text = cheat_font.render("+", True, (255, 255, 255))
+    screen.blit(level_skip_plus_text, (screen_x + 93+105, 330))
+    # ###
+
     screen.blit(score_text, (screen_x + 20, 10))
     screen.blit(lives_text, (screen_x + 20, 50))
     screen.blit(timer_text, (screen_x + 20, 90))
@@ -194,11 +235,15 @@ def draw_ui(
 
     return {
         "ghost_freeze": freeze_btn,
-        "invencibility": invenci_btn,
+        "invincibility": invinci_btn,
         "ghost_speed_plus": ghost_speed_plus,
         "ghost_speed_minus": ghost_speed_minus,
         "life_cheat_plus": life_cheat_plus,
-        "life_cheat_minus": life_cheat_minus
+        "life_cheat_minus": life_cheat_minus,
+        "self_speed_plus": self_speed_plus,
+        "self_speed_minus": self_speed_minus,
+        "level_skip_plus": level_skip_plus,
+        "level_skip_minus": level_skip_minus
     }
 
 
@@ -423,7 +468,9 @@ but only {len(l_pacgum)} valid spawn locations available."
                     pagman.ghosts[1].movement.speed,
                     pagman.ghosts[2].movement.speed,
                     pagman.ghosts[3].movement.speed
-                )
+                ),
+                pagman.player,
+                level
             )
             font = pygame.font.SysFont("Serif", 40, True)
             text = font.render(f"Level: {level}", True, (255, 255, 0))
@@ -449,10 +496,12 @@ but only {len(l_pacgum)} valid spawn locations available."
     pagman.player.next_tick = pygame.time.get_ticks() + pagman.player.interval
     paused = False
     start_ticks = pygame.time.get_ticks()
+    paused_timer = 0
+    paused_timer_value = 0
     while True:
         clock.tick(30)
         if not paused:
-            elapsed = (pygame.time.get_ticks() - start_ticks) // 1000
+            elapsed = (pygame.time.get_ticks() - start_ticks - paused_timer_value) // 1000
             time_left = max(0, config["level_max_time"] - elapsed)
         screen.fill(black)
         buttons = draw_ui(
@@ -467,7 +516,9 @@ but only {len(l_pacgum)} valid spawn locations available."
                 pagman.ghosts[1].movement.speed,
                 pagman.ghosts[2].movement.speed,
                 pagman.ghosts[3].movement.speed
-            )
+            ),
+            pagman.player,
+            level
         )
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -481,12 +532,12 @@ but only {len(l_pacgum)} valid spawn locations available."
                 ) and pagman.ghosts[0].frozen is True:
                     for ghost in pagman.ghosts:
                         ghost.frozen = False
-                if buttons["invencibility"].collidepoint(
+                if buttons["invincibility"].collidepoint(
                     event.pos
                 ) and pagman.player.lives != -1:
                     hold_lives = pagman.player.lives
                     pagman.player.lives = -1
-                elif buttons["invencibility"].collidepoint(
+                elif buttons["invincibility"].collidepoint(
                     event.pos
                 ) and pagman.player.lives == -1:
                     if hold_lives == 0:
@@ -508,11 +559,24 @@ but only {len(l_pacgum)} valid spawn locations available."
                 if buttons["life_cheat_minus"].collidepoint(event.pos):
                     if pagman.player.lives >= 2:
                         pagman.player.lives -= 1
+                if buttons["self_speed_plus"].collidepoint(event.pos):
+                    pagman.player.movement.speed += 1
+                if buttons["self_speed_minus"].collidepoint(event.pos):
+                    pagman.player.movement.speed -= 1
+                if buttons["level_skip_plus"].collidepoint(event.pos):
+                    # pagman.player.movement.speed += 1
+                    running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
+                    return (True, running_stats)
+                if buttons["level_skip_minus"].collidepoint(event.pos):
+                    # pagman.player.movement.speed -= 1
+                    pass
             if event.type == pygame.QUIT:
                 running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
                 return (False, running_stats)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
+                    if paused:
+                        paused_timer_value += paused_timer
                     paused = not paused
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
@@ -564,6 +628,7 @@ but only {len(l_pacgum)} valid spawn locations available."
             ghost3_group.update(walls, pagman.player, pagman.ghosts)
             ghost3_group.draw(screen)
         else:
+            paused_timer = pygame.time.get_ticks() - current_time
             font = pygame.font.SysFont("Serif", 40, True)
             pacman_group.draw(screen)
             ghost0_group.draw(screen)
@@ -727,7 +792,7 @@ def instructions(screen):
 
 
 def main_menu(screen: Surface = None):
-    if screen == None:
+    if screen is None:
         pygame.init()
         screen_x = 720
         screen_y = 720
