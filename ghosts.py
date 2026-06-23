@@ -43,7 +43,7 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
         self.rect: Rect = self.image.get_rect()
         self.rect.center = (int(spawn[0]), int(spawn[1]))
         self.eyes = [
-            img  # pygame.transform.scale(img, (size, size))
+            pygame.transform.scale(img, (size, size))  # pygame.transform.scale(img, (size, size))
             for img in self.images[1:5]  # down, up, right, left
         ]
         # Red (Blinky): Relentlessly chases Pac-Man directly.
@@ -58,6 +58,7 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
             speed=self.base_speed
         )
         self.hitbox = self.rect.inflate(-28, -28)
+        self.eye_update()
 
     @abstractmethod
     def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:

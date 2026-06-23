@@ -32,7 +32,7 @@ class Player(pygame.sprite.Sprite):
             pygame.transform.scale(self.orig_image[1],
                                    size=(size, size))
         ]
-        self.frame: int = 0
+        self.frame: int = 1
         self.current = self.orig_image[self.frame]
         self.last_angle = 0
         self.image = self.orig_image[self.frame]

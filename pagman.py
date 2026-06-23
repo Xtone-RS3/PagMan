@@ -390,6 +390,7 @@ but only {len(l_pacgum)} valid spawn locations available."
 
     def wait_for_keypress(message="Press any key to start"):
         waiting = True
+        
         while waiting:
             screen.fill(black)
             screen.blit(maze_surface, (0, 0))
@@ -425,6 +426,7 @@ but only {len(l_pacgum)} valid spawn locations available."
     if not success:
         return False, stats
 
+    pagman.player.next_tick = pygame.time.get_ticks() + pagman.player.interval
     paused = False
     start_ticks = pygame.time.get_ticks()
 
@@ -443,7 +445,6 @@ but only {len(l_pacgum)} valid spawn locations available."
             screen_y,
             pagman.ghosts[0].movement.speed
         )
-        current_time = pygame.time.get_ticks()
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if buttons["ghost_freeze"].collidepoint(
@@ -517,8 +518,8 @@ but only {len(l_pacgum)} valid spawn locations available."
                 print("You win!")
                 running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
                 return (True, running_stats)
-
         if not paused:
+            current_time = pygame.time.get_ticks()
             pacman_group.update(walls, current_time)
             pacman_group.draw(screen)
             ghost0_group.update(walls, pagman.player, pagman.ghosts)
@@ -540,6 +541,7 @@ but only {len(l_pacgum)} valid spawn locations available."
             success, stats = wait_for_keypress("You died! Press any key to respawn")
             if not success:
                 return False, stats
+            pagman.player.next_tick = pygame.time.get_ticks() + pagman.player.interval
 
         pygame.display.flip()
 
