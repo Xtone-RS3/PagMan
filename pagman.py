@@ -680,11 +680,6 @@ def main_menu():
     font = pygame.font.SysFont("Serif", 40, True)
     font_title = pygame.font.SysFont("Serif", 100, True)
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                pass
         screen.fill((0, 0, 0))
         pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
         screen.blit(pagman_title, (140, 50))
@@ -710,12 +705,22 @@ def main_menu():
         screen.blit(exit_text, (255, 515))
         # ###
         pygame.display.flip()
-        return {
-            "game_start": game_start_rect,
-            "highscores": hs_rect,
-            "instructions": instructions_rect,
-            "exit": exit_rect
-        }
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if game_start_rect.collidepoint(event.pos):
+                    pygame.quit()
+                    game_start()
+                if hs_rect.collidepoint(event.pos):
+                    leaderboard(config["highscore_filename"])
+                # ins
+                # ins
+                if exit_rect.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                pass
 
 
 if __name__ == "__main__":
@@ -734,7 +739,6 @@ if __name__ == "__main__":
     # print(hex_lists2)
     # print(config)
     main_menu()
-    leaderboard(config["highscore_filename"])
     # vvvvvvvvv GAME START vvvvvvvvvv
     # game_start()
     # ^^^^^^^^ GAME START ^^^^^^^^
