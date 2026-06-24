@@ -1,10 +1,10 @@
 {
 	"highscore_filename":"HS.json",
 	"level_cap":10,
-	"width": 11,
-	"height":32,
+	"width": 15,
+	"height":15,
 	"lives":3,
-	"pacgum":1,
+	"pacgum":42,
 	"points_per_pacgum":10,
 	"points_per_super_pacgum":50,
 	"points_per_ghost":200,

@@ -443,6 +443,7 @@ but only {len(l_pacgum)} valid spawn locations available."
     ghost3_group.add(pagman.ghosts[3])
     pacman_group.add(pagman.player)
     hold_lives = 0
+    time_left = config["level_max_time"]
 
     def wait_for_keypress(message="Press any key to start"):
         waiting = True
@@ -460,7 +461,7 @@ but only {len(l_pacgum)} valid spawn locations available."
                 screen,
                 pagman.player.score,
                 pagman.player.lives,
-                config["level_max_time"],
+                time_left,
                 screen_x,
                 screen_y,
                 min(
@@ -498,6 +499,7 @@ but only {len(l_pacgum)} valid spawn locations available."
     start_ticks = pygame.time.get_ticks()
     paused_timer = 0
     paused_timer_value = 0
+    time_left = config["level_max_time"]
     while True:
         clock.tick(30)
         if not paused:
@@ -642,6 +644,10 @@ but only {len(l_pacgum)} valid spawn locations available."
             menu_instructions = font.render("Press 'space' to Main Menu", True, (255, 255, 0))
             screen.blit(menu_instructions, (screen_x // 2 - menu_instructions.get_width() // 2, screen_y-500 // 2))  # TODO 2/3 of Y
 
+        if time_left <= 0:
+            running_stats = {"lives": pagman.player.lives, "score": pagman.player.score}
+            return (False, running_stats)
+
         # Respawn do jogador e ecrã de espera caso tenha acabado de morrer
         if pagman.player.just_died:
             pagman.player.just_died = False
@@ -684,7 +690,7 @@ def game_start():
 
 def leaderboard(HS_file: str, score: int = 0, screen: Surface=None):
     pygame.init()
-    
+
     if screen == None:
         screen_x = 720
         screen_y = 720
@@ -698,8 +704,7 @@ def leaderboard(HS_file: str, score: int = 0, screen: Surface=None):
     name = ""
     finish_input = False
     pygame.key.start_text_input()
-    valid_chars = "abcdefghijklmnopqrstuvwxyzAB\
-CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
+    valid_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
     if score != 0:
         clock = pygame.time.Clock()
         while True:
@@ -715,16 +720,31 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
                     if event.key == pygame.K_RETURN:
                         finish_input = True
             screen.fill((0, 0, 0))
+
+            # Title
             pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
-            screen.blit(pagman_title, (140, 50))
+            screen.blit(pagman_title, (screen_x//2 - pagman_title.get_width()//2, 60))
+
+            # Score
             score_line = font.render(f"Score: {score}", True, (255, 255, 255))
-            screen.blit(score_line, (275, 265))
-            type_here = font.render("Write your name", True, (255, 255, 255))
-            screen.blit(type_here, (210, 430))
-            input_rect = pygame.Rect(250, 330, 210, 50)
+            screen.blit(score_line, (screen_x//2 - score_line.get_width()//2, 220))
+
+            # Input label
+            type_here = font.render("Write your name:", True, (255, 255, 255))
+            screen.blit(type_here, (screen_x//2 - type_here.get_width()//2, 310))
+
+            # Larger input rect to fit 10 uppercase chars
+            input_rect = pygame.Rect(screen_x//2 - 165, 355, 330, 55)
             pygame.draw.rect(screen, (255, 255, 255), input_rect, 2)
+
+            # Render name centered in rect
             text_surface = font.render(name[:10], True, (255, 255, 255))
-            screen.blit(text_surface, (255, 335))
+            screen.blit(text_surface, (screen_x//2 - text_surface.get_width()//2, 362))
+
+            # Max chars hint
+            hint = pygame.font.SysFont("Serif", 20, True).render("max 10 characters", True, (150, 150, 150))
+            screen.blit(hint, (screen_x//2 - hint.get_width()//2, 418))
+
             if finish_input is True:
                 pygame.key.stop_text_input()
                 screen.fill((0, 0, 0))
@@ -746,18 +766,32 @@ CDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
     sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
 
     num = 0
+    screen.fill((0, 0, 0))
     pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
-    screen.blit(pagman_title, (140, 50))
-    press_space = font.render("Press any key to Main Menu", True, (255, 255, 255))
-    screen.blit(press_space, (210, 170))
+    screen.blit(pagman_title, (screen_x//2 - pagman_title.get_width()//2, 50))
+    press_space = font.render("Press SPACE for Main Menu", True, (255, 255, 255))
+    screen.blit(press_space, (screen_x//2 - press_space.get_width()//2, 175))
+
+    # Header row
+    rank_header = font.render("Rank", True, (255, 255, 0))
+    name_header = font.render("Name", True, (255, 255, 0))
+    score_header = font.render("Score", True, (255, 255, 0))
+    screen.blit(rank_header, (screen_x//5 - rank_header.get_width()//2, 225))
+    screen.blit(name_header, (screen_x//2 - name_header.get_width()//2, 225))
+    screen.blit(score_header, (4*screen_x//5 - score_header.get_width()//2, 225))
+    pygame.draw.line(screen, (255, 255, 0), (screen_x//5, 265), (4*screen_x//5, 265), 2)
+
     for player in sorted_leaderboard[0:10]:
-        player_name = font.render(f"{player[0]}", True, (255, 255, 255))
-        screen.blit(player_name, (screen_x/4, 235+num*45))
+        rank = font.render(f"#{num+1}", True, (255, 255, 255))
+        player_name = font.render(f"{player[0][:10]}", True, (255, 255, 255))
         player_score = font.render(f"{player[1]}", True, (255, 255, 255))
-        screen.blit(player_score, (screen_x/2, 235+num*45))
+        y = 280 + num * 42
+        screen.blit(rank, (screen_x//5 - rank.get_width()//2, y))
+        screen.blit(player_name, (screen_x//2 - player_name.get_width()//2, y))
+        screen.blit(player_score, (4*screen_x//5 - player_score.get_width()//2, y))
         num += 1
+    pygame.display.flip()
     while True:
-        pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -772,12 +806,32 @@ def instructions(screen):
     pygame.init()
     font = pygame.font.SysFont("Serif", 40, True)
     font_title = pygame.font.SysFont("Serif", 100, True)
+    font_small = pygame.font.SysFont("Serif", 28, True)
     while True:
         screen.fill((0, 0, 0))
         pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
-        screen.blit(pagman_title, (140, 50))
-        press_space = font.render("Press any key to Main Menu", True, (255, 255, 255))
-        screen.blit(press_space, (210, 170))
+        screen.blit(pagman_title, (screen.get_width()//2 - pagman_title.get_width()//2, 50))
+        press_space = font.render("Press SPACE for Main Menu", True, (255, 255, 255))
+        screen.blit(press_space, (screen.get_width()//2 - press_space.get_width()//2, 175))
+
+        # Separator line
+        pygame.draw.line(screen, (255, 255, 0), (screen.get_width()//4, 220), (3*screen.get_width()//4, 220), 2)
+
+        instructions = [
+            ("Arrow Keys", "Movement"),
+            ("P", "Pause / Resume"),
+            ("Collect Pac-Gums", "+10 pts"),
+            ("Collect Super Pac-Gums", "+50 pts + eat ghosts"),
+            ("Ghost Freeze / Invincibility", "Cheat buttons"),
+        ]
+        for i, (key, desc) in enumerate(instructions):
+            key_text = font_small.render(key, True, (255, 255, 0))
+            desc_text = font_small.render(desc, True, (255, 255, 255))
+            y = 260 + i * 60
+            screen.blit(key_text, (screen.get_width()//4 - key_text.get_width()//2, y))
+            screen.blit(desc_text, (screen.get_width()//2 + 20, y))
+
+        pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -786,9 +840,6 @@ def instructions(screen):
                     main_menu(screen)
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
-        instruction_text = font.render("Arrows -> Movement", True, (255, 255, 255))
-        screen.blit(instruction_text, (180, 350))
-        pygame.display.flip()
 
 
 def main_menu(screen: Surface = None):

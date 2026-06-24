@@ -359,13 +359,28 @@ class pinkGhost(Ghost):
         if self.is_edible is False and self.is_alive is True:
             if not self.frozen:
                 self.death_routine(player, ghosts)
-            spawn_grid = (
-                int((self.spawn[0] - self.movement.maze_offset_x) // self.movement.cell_x_size),
-                int((self.spawn[1] - self.movement.maze_offset_y) // self.movement.cell_y_size)
-            )
-            next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
-            if len(path) <= 8:
-                next_dir_x, next_dir_y, path = self.bfs(walls, spawn_grid)
+
+            # Pinky: chase if far (>8), scatter if close
+            dist_to_player = abs(self.movement.grid_x - player.grid_pos[0]) + \
+                           abs(self.movement.grid_y - player.grid_pos[1])
+
+            if dist_to_player > 8:
+                # Far → chase
+                next_dir_x, next_dir_y, _ = self.bfs(walls, player.grid_pos)
+            else:
+                # Close → random wander
+                next_dir_x, next_dir_y = 0, 0
+                possible_dirs = []
+                for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                    if self.movement.can_move(
+                        walls, self.movement.grid_x, self.movement.grid_y, dx, dy
+                    ):
+                        if (dx, dy) != (
+                            -self.movement.dir_x, -self.movement.dir_y
+                        ):
+                            possible_dirs.append((dx, dy))
+                if possible_dirs:
+                    next_dir_x, next_dir_y = random.choice(possible_dirs)
 
             self.movement.update(walls, next_dir_x, next_dir_y)
             self.rect.center = (
@@ -398,6 +413,7 @@ class cyanGhost(Ghost):
             maze_offset_x,
             maze_offset_y
         )
+        self.last_player_dir = (1, 0)
 
     def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
         self.eye_update()
@@ -409,16 +425,18 @@ class cyanGhost(Ghost):
         if self.is_edible is False and self.is_alive is True:
             if not self.frozen:
                 self.death_routine(player, ghosts)
-            if player.movement.dir_x == 0 and player.movement.dir_y == 0:
-                next_dir_x, next_dir_y = 0, 0
-            else:
-                next_dir_x, next_dir_y = 0, 0
-                for i in range(2, 0, -1):
-                    tx = player.grid_pos[0] + i * player.movement.dir_x
-                    ty = player.grid_pos[1] + i * player.movement.dir_y
-                    if 0 <= tx < len(walls[0]) and 0 <= ty < len(walls):
-                        next_dir_x, next_dir_y, _ = self.bfs(walls, (tx, ty))
-                        break
+
+            # Save player direction for ambush
+            if player.movement.dir_x != 0 or player.movement.dir_y != 0:
+                self.last_player_dir = (player.movement.dir_x, player.movement.dir_y)
+
+            # Ambush: aim 2 cells ahead of player
+            tx = player.grid_pos[0] + 2 * self.last_player_dir[0]
+            ty = player.grid_pos[1] + 2 * self.last_player_dir[1]
+            tx = max(0, min(len(walls[0]) - 1, tx))
+            ty = max(0, min(len(walls) - 1, ty))
+            next_dir_x, next_dir_y, _ = self.bfs(walls, (tx, ty))
+
             self.movement.update(walls, next_dir_x, next_dir_y)
             self.rect.center = (
                 int(self.movement.pixel_x),
