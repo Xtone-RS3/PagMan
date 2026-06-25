@@ -23,8 +23,8 @@ class Player(pygame.sprite.Sprite):
         self.lives = lives
         self.score = score
         self.just_died = False
-        self.orig_image = [pygame.image.load("PagMan.png"),
-                           pygame.image.load("PauseMan.png")]
+        self.orig_image = [pygame.image.load("pacmen_and_gums/PagMan.png"),
+                           pygame.image.load("pacmen_and_gums/PauseMan.png")]
         a = int(cell_x_size * 2/3)
         b = int(cell_y_size * 2/3)
         size = min(a, b)

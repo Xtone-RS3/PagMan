@@ -4,11 +4,10 @@ from pygame import Surface
 from typing import Dict, Any, Optional
 import sys
 import json
-import math
 
 
 class UIState:
-    def __init__(self):
+    def __init__(self) -> None:
         self.freeze_animation = 0
         self.invinci_animation = 0
         self.animation_speed = 0.1
@@ -36,19 +35,25 @@ def draw_ui(
 
     ui_bg_color = (15, 15, 35)
     ui_border_color = (68, 136, 221)
-    pygame.draw.rect(screen, ui_bg_color, (screen_x, 0, screen_x + 250, screen_y))
-    pygame.draw.line(screen, ui_border_color, (screen_x, 0), (screen_x, screen_y), 3)
+    pygame.draw.rect(
+        screen, ui_bg_color, (screen_x, 0, screen_x + 250, screen_y)
+    )
+    pygame.draw.line(
+        screen, ui_border_color, (screen_x, 0), (screen_x, screen_y), 3
+    )
 
     # Score section
     score_text = font_large.render(f"Score: {score}", True, (255, 255, 0))
     screen.blit(score_text, (screen_x + 15, 15))
-    pygame.draw.line(screen, ui_border_color, (screen_x + 10, 60), (screen_x + 240, 60), 2)
+    pygame.draw.line(
+        screen, ui_border_color, (screen_x + 10, 60), (screen_x + 240, 60), 2
+    )
 
     # Lives section
     lives_label = font_medium.render("Lives:", True, (100, 200, 255))
     screen.blit(lives_label, (screen_x + 15, 75))
 
-    life_icon = pygame.image.load("PagMan.png")
+    life_icon = pygame.image.load("pacmen_and_gums/PagMan.png")
     if lives <= 3 and lives > 0:
         for i in range(lives):
             screen.blit(life_icon, (screen_x + 110 + i * 35, 70))
@@ -67,24 +72,38 @@ def draw_ui(
         f"Time: {minutes:02}:{seconds:02}", True, timer_color
     )
     screen.blit(timer_text, (screen_x + 15, 115))
-    pygame.draw.line(screen, ui_border_color, (screen_x + 10, 155), (screen_x + 240, 155), 2)
+    pygame.draw.line(
+        screen, ui_border_color, (screen_x + 10, 155), (screen_x + 240, 155), 2
+    )
 
     # Update animations
     if ghosts_frozen:
-        _ui_state.freeze_animation = min(1.0, _ui_state.freeze_animation + _ui_state.animation_speed)
+        _ui_state.freeze_animation = int(min(
+            1.0, _ui_state.freeze_animation + _ui_state.animation_speed
+        ))
     else:
-        _ui_state.freeze_animation = max(0.0, _ui_state.freeze_animation - _ui_state.animation_speed)
+        _ui_state.freeze_animation = int(max(
+            0.0, _ui_state.freeze_animation - _ui_state.animation_speed
+        ))
 
     if invincible:
-        _ui_state.invinci_animation = min(1.0, _ui_state.invinci_animation + _ui_state.animation_speed)
+        _ui_state.invinci_animation = int(min(
+            1.0, _ui_state.invinci_animation + _ui_state.animation_speed
+        ))
     else:
-        _ui_state.invinci_animation = max(0.0, _ui_state.invinci_animation - _ui_state.animation_speed)
+        _ui_state.invinci_animation = int(max(
+            0.0, _ui_state.invinci_animation - _ui_state.animation_speed
+        ))
 
     # Ghost Freeze button with animation
     freeze_btn = pygame.Rect(screen_x + 15, 170, 220, 50)
     freeze_glow = int(50 * _ui_state.freeze_animation)
     freeze_base_color = (50, 100, 50) if ghosts_frozen else (80, 40, 40)
-    freeze_highlight = (100 + freeze_glow, 150 + freeze_glow, 100 + freeze_glow) if ghosts_frozen else (180 + freeze_glow, 100 + freeze_glow, 100 + freeze_glow)
+    freeze_highlight = (
+        100 + freeze_glow, 150 + freeze_glow, 100 + freeze_glow
+    ) if ghosts_frozen else (
+        180 + freeze_glow, 100 + freeze_glow, 100 + freeze_glow
+    )
 
     pygame.draw.rect(screen, freeze_base_color, freeze_btn)
     pygame.draw.rect(screen, freeze_highlight, freeze_btn, 3)
@@ -92,15 +111,21 @@ def draw_ui(
     freeze_text = font_medium.render("Ghost Freeze", True, (255, 255, 255))
     screen.blit(freeze_text, (screen_x + 25, 180))
 
-    freeze_status = font_small.render("ON" if ghosts_frozen else "OFF", True,
-                                       (100, 255, 100) if ghosts_frozen else (255, 100, 100))
+    freeze_status = font_small.render(
+        "ON" if ghosts_frozen else "OFF",
+        True, (100, 255, 100) if ghosts_frozen else (255, 100, 100)
+    )
     screen.blit(freeze_status, (screen_x + 190, 185))
 
     # Invincibility button with animation
     invinci_btn = pygame.Rect(screen_x + 15, 235, 220, 50)
     invinci_glow = int(50 * _ui_state.invinci_animation)
     invinci_base_color = (50, 100, 50) if invincible else (80, 40, 40)
-    invinci_highlight = (100 + invinci_glow, 150 + invinci_glow, 100 + invinci_glow) if invincible else (180 + invinci_glow, 100 + invinci_glow, 100 + invinci_glow)
+    invinci_highlight = (
+        100 + invinci_glow, 150 + invinci_glow, 100 + invinci_glow
+    ) if invincible else (
+        180 + invinci_glow, 100 + invinci_glow, 100 + invinci_glow
+    )
 
     pygame.draw.rect(screen, invinci_base_color, invinci_btn)
     pygame.draw.rect(screen, invinci_highlight, invinci_btn, 3)
@@ -108,11 +133,15 @@ def draw_ui(
     invinci_text = font_medium.render("Invincibility", True, (255, 255, 255))
     screen.blit(invinci_text, (screen_x + 25, 245))
 
-    invinci_status = font_small.render("ON" if invincible else "OFF", True,
-                                        (100, 255, 100) if invincible else (255, 100, 100))
+    invinci_status = font_small.render(
+        "ON" if invincible else "OFF",
+        True, (100, 255, 100) if invincible else (255, 100, 100)
+    )
     screen.blit(invinci_status, (screen_x + 190, 250))
 
-    pygame.draw.line(screen, ui_border_color, (screen_x + 10, 300), (screen_x + 240, 300), 2)
+    pygame.draw.line(
+        screen, ui_border_color, (screen_x + 10, 300), (screen_x + 240, 300), 2
+    )
 
     # Ghost Speed control
     ghost_speed_text = font_medium.render("Ghost Speed", True, (100, 200, 255))
@@ -124,7 +153,9 @@ def draw_ui(
     ghost_speed_minus_text = font_small.render("-", True, (255, 255, 255))
     screen.blit(ghost_speed_minus_text, (screen_x + 162, 318))
 
-    ghost_speed_stat_text = font_small.render(f"{ghost_speed}", True, (255, 200, 100))
+    ghost_speed_stat_text = font_small.render(
+        f"{ghost_speed}", True, (255, 200, 100)
+    )
     screen.blit(ghost_speed_stat_text, (screen_x + 195, 323))
 
     ghost_speed_plus = pygame.Rect(screen_x + 215, 320, 25, 25)
@@ -143,7 +174,9 @@ def draw_ui(
     life_cheat_minus_text = font_small.render("-", True, (255, 255, 255))
     screen.blit(life_cheat_minus_text, (screen_x + 162, 358))
 
-    life_cheat_stat_text = font_small.render(f"{lives if lives >= 0 else '∞'}", True, (255, 200, 100))
+    life_cheat_stat_text = font_small.render(
+        f"{lives if lives >= 0 else '∞'}", True, (255, 200, 100)
+    )
     screen.blit(life_cheat_stat_text, (screen_x + 195, 363))
 
     life_cheat_plus = pygame.Rect(screen_x + 215, 360, 25, 25)
@@ -162,7 +195,9 @@ def draw_ui(
     self_speed_minus_text = font_small.render("-", True, (255, 255, 255))
     screen.blit(self_speed_minus_text, (screen_x + 162, 398))
 
-    self_speed_stat_text = font_small.render(f"{player.movement.speed}", True, (255, 200, 100))
+    self_speed_stat_text = font_small.render(
+        f"{player.movement.speed}", True, (255, 200, 100)
+    )
     screen.blit(self_speed_stat_text, (screen_x + 195, 403))
 
     self_speed_plus = pygame.Rect(screen_x + 215, 400, 25, 25)
@@ -175,7 +210,9 @@ def draw_ui(
     level_skip_text = font_medium.render("Level Skip", True, (100, 200, 255))
     screen.blit(level_skip_text, (screen_x + 15, 440))
 
-    level_skip_stat_text = font_small.render(f"Lvl: {level}", True, (255, 200, 100))
+    level_skip_stat_text = font_small.render(
+        f"Lvl: {level}", True, (255, 200, 100)
+    )
     screen.blit(level_skip_stat_text, (screen_x + 155, 443))
 
     level_skip_plus = pygame.Rect(screen_x + 215, 440, 25, 25)

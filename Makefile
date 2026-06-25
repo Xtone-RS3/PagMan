@@ -32,7 +32,7 @@ install:
 
 run: install
 	@echo "Running..."
-	@$(PY) game.py
+	@$(PY) srcs/game.py
 
 
 # =========================
@@ -41,8 +41,8 @@ run: install
 
 lint:
 	@echo "Running flake8 + mypy..."
-	@$(UV) run flake8 ghosts.py pacman.py movement.py player.py game.py gums.py ui.py
-	@$(UV) run mypy ghosts.py pacman.py movement.py player.py game.py gums.py ui.py --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	@$(UV) run flake8 srcs
+	@$(UV) run mypy srcs --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 
 # =========================

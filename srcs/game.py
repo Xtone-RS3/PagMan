@@ -22,9 +22,22 @@ def game(
     maze_offset_x: int,
     maze_offset_y: int
 ) -> tuple[bool, Dict[str, int]]:
-    maze = MazeGenerator(
-        seed=config["seed"] + level, size=(config["width"], config["height"])
-    )
+    try:
+        maze = MazeGenerator(
+            seed=config["seed"] + level,
+            size=(config["width"],
+                  config["height"])
+        )
+    except RecursionError:
+        print("Parsing error detected, defaulting to size: 15x15")
+        maze = MazeGenerator(
+            seed=config["seed"] + level, size=(15, 15)
+        )
+        config["width"], config["height"] = 15, 15
+        cell_x_size = int(screen_x / 15)
+        cell_y_size = int(screen_y / 15)
+        cell_x_size, cell_y_size = \
+            min(cell_x_size, cell_y_size), min(cell_x_size, cell_y_size)
     pygame.display.set_caption("Pac-Man")
     maze_surface: pygame.Surface = pygame.Surface(
         (screen_x, screen_y), pygame.SRCALPHA
@@ -134,15 +147,15 @@ def game(
     spawn_y = mid_row * cell_y_size + cell_y_size / 2
     image_list = {}
     folder = {
-        "cyan": "pacmen/cyan_ghost.png",
-        "red": "pacmen/red_ghost.png",
-        "orange": "pacmen/orange_ghost.png",
-        "pink": "pacmen/pink_ghost.png",
-        "right_eyes": "pacmen/right_eyes.png",
-        "left_eyes": "pacmen/left_eyes.png",
-        "up_eyes": "pacmen/up_eyes.png",
-        "down_eyes": "pacmen/down_eyes.png",
-        "dead": "pacmen/dead.png"
+        "cyan": "ghosts/cyan_ghost.png",
+        "red": "ghosts/red_ghost.png",
+        "orange": "ghosts/orange_ghost.png",
+        "pink": "ghosts/pink_ghost.png",
+        "right_eyes": "ghosts/right_eyes.png",
+        "left_eyes": "ghosts/left_eyes.png",
+        "up_eyes": "ghosts/up_eyes.png",
+        "down_eyes": "ghosts/down_eyes.png",
+        "dead": "ghosts/dead.png"
     }
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
@@ -505,9 +518,35 @@ if __name__ == "__main__":
     else:
         config_file = "config.json"
     lines = []
-    with open(config_file) as file:
-        for line in file:
-            if not line.lstrip().startswith("#"):
-                lines.append(line)
-    config = json.loads("".join(lines))
+    config_default = {
+        "highscore_filename": "HS.json",
+        "level_cap": 10,
+        "width": 15,
+        "height": 15,
+        "lives": 3,
+        "pacgum": 42,
+        "points_per_pacgum": 10,
+        "points_per_super_pacgum": 50,
+        "points_per_ghost": 200,
+        "seed": 42,
+        "level_max_time": 1000
+    }
+    try:
+        with open(config_file) as file:
+            for line in file:
+                if not line.lstrip().startswith("#"):
+                    lines.append(line)
+        config: Dict = json.loads("".join(lines))
+        if not isinstance(config["highscore_filename"], str):
+            raise Exception("Parsing error")
+        config_hold = config.copy()
+        config_hold.pop("highscore_filename")
+        for config_key, config_value in config_hold.items():
+            if not isinstance(config_value, int):
+                raise Exception("Parsing error")
+        if not set(list(config_default.keys())).issubset(list(config.keys())):
+            raise Exception("Parsing error")
+    except Exception as e:
+        print(e)
+        config = config_default
     main_menu(config)
