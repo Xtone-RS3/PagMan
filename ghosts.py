@@ -45,14 +45,10 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
         self.rect: Rect = self.image.get_rect()
         self.rect.center = (int(spawn[0]), int(spawn[1]))
         self.eyes = [
-            pygame.transform.scale(img, (size, size))  # pygame.transform.scale(img, (size, size))
+            pygame.transform.scale(img, (size, size))
             for img in self.images[1:5]  # down, up, right, left
         ]
-        # Red (Blinky): Relentlessly chases Pac-Man directly.
-        # Pink (Pinky): Tries to position herself ahead of Pac-Man to trap him.
-        # Cyan/Light Blue (Inky): Has an unpredictable, flanking personality.
-        # Orange (Clyde): Wanders aimlessly or moves randomly.
-        # Dark blue: run away
+
         self.movement = Movement(
             cell_x_size,
             cell_y_size,
@@ -65,7 +61,9 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
         self.eye_update()
 
     @abstractmethod
-    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
+    def update(
+        self, walls: Any, player: Player, ghosts: List["Ghost"]
+    ) -> None:
         pass
 
     def eye_update(self) -> None:
@@ -100,12 +98,15 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
         if player.lives != -1:
             if self.rect.colliderect(player.rect):
                 for ghost in ghosts:
-                    ghost.movement.pixel_x, ghost.movement.pixel_y = ghost.spawn
+                    ghost.movement.pixel_x, ghost.movement.pixel_y = \
+                        ghost.spawn
                     ghost.movement.grid_x = int(
-                        (ghost.movement.pixel_x - ghost.movement.maze_offset_x) // ghost.movement.cell_x_size
+                        (ghost.movement.pixel_x - ghost.movement.maze_offset_x)
+                        // ghost.movement.cell_x_size
                     )
                     ghost.movement.grid_y = int(
-                        (ghost.movement.pixel_y - ghost.movement.maze_offset_y) // ghost.movement.cell_y_size
+                        (ghost.movement.pixel_y - ghost.movement.maze_offset_y)
+                        // ghost.movement.cell_y_size
                     )
                     ghost.movement.dir_x, ghost.movement.dir_y = 0, 0
                     ghost.rect.center = (int(ghost.movement.pixel_x),
@@ -248,7 +249,9 @@ class redGhost(Ghost):
             maze_offset_y
         )
 
-    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
+    def update(
+        self, walls: Any, player: Player, ghosts: List["Ghost"]
+    ) -> None:
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0
@@ -292,7 +295,9 @@ class orangeGhost(Ghost):
             maze_offset_y
         )
 
-    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
+    def update(
+        self, walls: Any, player: Player, ghosts: List["Ghost"]
+    ) -> None:
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0
@@ -349,7 +354,9 @@ class pinkGhost(Ghost):
             maze_offset_y
         )
 
-    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
+    def update(
+        self, walls: Any, player: Player, ghosts: List["Ghost"]
+    ) -> None:
         if self.frozen:
             self.movement.speed = 0
             pass
@@ -362,7 +369,7 @@ class pinkGhost(Ghost):
 
             # Pinky: chase if far (>8), scatter if close
             dist_to_player = abs(self.movement.grid_x - player.grid_pos[0]) + \
-                           abs(self.movement.grid_y - player.grid_pos[1])
+                abs(self.movement.grid_y - player.grid_pos[1])
 
             if dist_to_player > 8:
                 # Far → chase
@@ -373,7 +380,8 @@ class pinkGhost(Ghost):
                 possible_dirs = []
                 for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
                     if self.movement.can_move(
-                        walls, self.movement.grid_x, self.movement.grid_y, dx, dy
+                        walls, self.movement.grid_x, self.movement.grid_y, dx,
+                        dy
                     ):
                         if (dx, dy) != (
                             -self.movement.dir_x, -self.movement.dir_y
@@ -415,7 +423,9 @@ class cyanGhost(Ghost):
         )
         self.last_player_dir = (1, 0)
 
-    def update(self, walls: Any, player: Player, ghosts: List["Ghost"]) -> None:
+    def update(
+        self, walls: Any, player: Player, ghosts: List["Ghost"]
+    ) -> None:
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0
@@ -428,7 +438,8 @@ class cyanGhost(Ghost):
 
             # Save player direction for ambush
             if player.movement.dir_x != 0 or player.movement.dir_y != 0:
-                self.last_player_dir = (player.movement.dir_x, player.movement.dir_y)
+                self.last_player_dir = (player.movement.dir_x,
+                                        player.movement.dir_y)
 
             # Ambush: aim 2 cells ahead of player
             tx = player.grid_pos[0] + 2 * self.last_player_dir[0]

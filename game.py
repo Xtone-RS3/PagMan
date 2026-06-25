@@ -1,25 +1,26 @@
 import pygame
 from mazegenerator import MazeGenerator
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 from pacman import PacMan
 import random
 from gums import Pacgum, superPacgum
 from ui import draw_ui, leaderboard, main_menu
 import sys
 import json
+from pygame import Surface
 
 
 def game(
     level: int,
     config: dict,
     score: int,
-    screen, screen_x,
-    screen_y,
-    cell_x_size,
-    cell_y_size,
-    player_died,
-    maze_offset_x,
-    maze_offset_y
+    screen: Surface, screen_x: int,
+    screen_y: int,
+    cell_x_size: int,
+    cell_y_size: int,
+    player_died: int,
+    maze_offset_x: int,
+    maze_offset_y: int
 ) -> tuple[bool, Dict[str, int]]:
     maze = MazeGenerator(
         seed=config["seed"] + level, size=(config["width"], config["height"])
@@ -220,7 +221,8 @@ but only {len(l_pacgum)} valid spawn locations available."
     hold_lives = 0
     time_left = config["level_max_time"]
 
-    def wait_for_keypress(message="Press any key to start"):
+    def wait_for_keypress(message: str = "Press any key to start") -> \
+            Tuple[bool, Dict]:
         waiting = True
         while waiting:
             screen.fill(black)
@@ -458,12 +460,13 @@ but only {len(l_pacgum)} valid spawn locations available."
             if not success:
                 return (False, stats)
             death_freeze_elapsed += (pygame.time.get_ticks() - death_time)
-            pagman.player.next_tick = pygame.time.get_ticks() + pagman.player.interval
+            pagman.player.next_tick = pygame.time.get_ticks() + \
+                pagman.player.interval
 
         pygame.display.flip()
 
 
-def game_start(config: Dict[Any, Any]):
+def game_start(config: Dict[Any, Any]) -> None:
     score = 0
     pygame.init()
     PLAYER_DIED = pygame.event.custom_type()

@@ -8,7 +8,7 @@ class Pacgum(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (size, size))
         self.rect = self.image.get_rect()
         self.rect.center = (int(x), int(y))
-        self.hitbox = self.rect.inflate(-28, -28)  # TODO addapt these with size
+        self.hitbox = self.rect.inflate(-28, -28)
 
 
 class superPacgum(pygame.sprite.Sprite):

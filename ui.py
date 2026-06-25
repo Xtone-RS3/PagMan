@@ -1,7 +1,7 @@
 import pygame
 from player import Player
 from pygame import Surface
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import sys
 import json
 
@@ -143,7 +143,9 @@ def draw_ui(
     }
 
 
-def leaderboard(config: Dict[Any, Any], score: int = 0, screen: Surface = None):
+def leaderboard(
+    config: Dict[Any, Any], score: int = 0, screen: Optional[Surface] = None
+) -> None:
     pygame.init()
     HS_file = config["highscore_filename"]
     if screen is None:
@@ -269,7 +271,7 @@ PQRSTUVWXYZ0123456789 "
                     sys.exit()
 
 
-def instructions(config: Dict[Any, Any], screen):
+def instructions(config: Dict[Any, Any], screen: Surface) -> None:
     pygame.init()
     font = pygame.font.SysFont("Serif", 40, True)
     font_title = pygame.font.SysFont("Serif", 100, True)
@@ -316,8 +318,8 @@ def instructions(config: Dict[Any, Any], screen):
 
 
 def main_menu(
-    config: Dict[Any, Any], screen: Surface = None  # type: ignore
-):
+    config: Dict[Any, Any], screen: Optional[Surface] = None
+) -> None:
     from game import game_start
     if screen is None:
         pygame.init()

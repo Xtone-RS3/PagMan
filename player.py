@@ -1,6 +1,5 @@
 from typing import Any
 import pygame
-import sys
 from movement import Movement
 from pygame.rect import Rect
 
@@ -87,8 +86,10 @@ class Player(pygame.sprite.Sprite):
     @property
     def grid_pos(self) -> tuple[int, int]:
         return (
-            int((self.movement.pixel_x - self.movement.maze_offset_x) // self.cell_x_size),
-            int((self.movement.pixel_y - self.movement.maze_offset_y) // self.cell_y_size)
+            int((self.movement.pixel_x - self.movement.maze_offset_x) //
+                self.cell_x_size),
+            int((self.movement.pixel_y - self.movement.maze_offset_y) //
+                self.cell_y_size)
         )
 
     def update(self, walls: Any, current_time: int) -> None:
@@ -130,10 +131,12 @@ class Player(pygame.sprite.Sprite):
         else:
             self.movement.pixel_x, self.movement.pixel_y = self.spawn
             self.movement.grid_x = int(
-                (self.movement.pixel_x - self.movement.maze_offset_x) // self.cell_x_size
+                (self.movement.pixel_x - self.movement.maze_offset_x) //
+                self.cell_x_size
             )
             self.movement.grid_y = int(
-                (self.movement.pixel_y - self.movement.maze_offset_y) // self.cell_y_size
+                (self.movement.pixel_y - self.movement.maze_offset_y) //
+                self.cell_y_size
             )
             self.movement.dir_x, self.movement.dir_y = 0, 0
             self.next_dir_x, self.next_dir_y = 0, 0
