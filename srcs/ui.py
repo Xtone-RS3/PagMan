@@ -154,7 +154,7 @@ def draw_ui(
     screen.blit(ghost_speed_minus_text, (screen_x + 162, 318))
 
     ghost_speed_stat_text = font_small.render(
-        f"{ghost_speed}", True, (255, 200, 100)
+        f"{ghost_speed}", True, (255, 200, 100)  # make this speed value independent from the real value, the display value only edits itself
     )
     screen.blit(ghost_speed_stat_text, (screen_x + 195, 323))
 
@@ -268,6 +268,8 @@ PQRSTUVWXYZ0123456789 "
                         name = name[:-1]
                     if event.key == pygame.K_RETURN:
                         finish_input = True
+                    if event.key == pygame.K_ESCAPE:
+                        sys.exit()
             screen.fill((0, 0, 0))
 
             # Title

@@ -234,6 +234,25 @@ but only {len(l_pacgum)} valid spawn locations available."
     hold_lives = 0
     time_left = config["level_max_time"]
 
+    buttons = draw_ui(
+        screen,
+        pagman.player.score,
+        pagman.player.lives,
+        time_left,
+        screen_x,
+        screen_y,
+        min(
+            pagman.ghosts[0].movement.speed,
+            pagman.ghosts[1].movement.speed,
+            pagman.ghosts[2].movement.speed,
+            pagman.ghosts[3].movement.speed
+        ),
+        pagman.player,
+        level,
+        ghosts_frozen=pagman.ghosts[0].frozen,
+        invincible=pagman.player.lives == -1
+    )
+
     def wait_for_keypress(message: str = "Press any key to start") -> \
             Tuple[bool, Dict]:
         waiting = True
@@ -283,11 +302,59 @@ but only {len(l_pacgum)} valid spawn locations available."
                     if event.key == pygame.K_ESCAPE:
                         sys.exit()
                     waiting = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if buttons["ghost_freeze"].collidepoint(
+                        event.pos
+                    ) and pagman.ghosts[0].frozen is False:
+                        for ghost in pagman.ghosts:
+                            ghost.frozen = True
+                    elif buttons["ghost_freeze"].collidepoint(
+                        event.pos
+                    ) and pagman.ghosts[0].frozen is True:
+                        for ghost in pagman.ghosts:
+                            ghost.frozen = False
+                    if buttons["invincibility"].collidepoint(
+                        event.pos
+                    ) and pagman.player.lives != -1:
+                        hold_lives = pagman.player.lives
+                        pagman.player.lives = -1
+                    elif buttons["invincibility"].collidepoint(
+                        event.pos
+                    ) and pagman.player.lives == -1:
+                        if hold_lives == 0:
+                            hold_lives = 3
+                        pagman.player.lives = hold_lives
+                    if buttons["ghost_speed_plus"].collidepoint(event.pos):
+                        for ghost in pagman.ghosts:
+                            ghost.base_speed += 1
+                            if ghost.base_speed <= 1:
+                                ghost.base_speed = 1
+                    if buttons["ghost_speed_minus"].collidepoint(event.pos):
+                        for ghost in pagman.ghosts:
+                            ghost.base_speed -= 1
+                            if ghost.base_speed <= 1:
+                                ghost.base_speed = 1
+                    if buttons["life_cheat_plus"].collidepoint(event.pos):
+                        if pagman.player.lives >= 1:
+                            pagman.player.lives += 1
+                    if buttons["life_cheat_minus"].collidepoint(event.pos):
+                        if pagman.player.lives >= 2:
+                            pagman.player.lives -= 1
+                    if buttons["self_speed_plus"].collidepoint(event.pos):
+                        pagman.player.movement.speed += 1
+                    if buttons["self_speed_minus"].collidepoint(event.pos):
+                        if pagman.player.movement.speed > 1:
+                            pagman.player.movement.speed -= 1
+                    if buttons["level_skip_plus"].collidepoint(event.pos):
+                        # pagman.player.movement.speed += 1
+                        running_stats = {"lives": pagman.player.lives,
+                                         "score": pagman.player.score}
+                        return (True, running_stats)
         return (True, {})  # TODO is this correct?
 
     success, stats = wait_for_keypress()
-    if not success:
-        return False, stats
+    # if not success:
+    #     return False, stats
     current_time = 0
     pagman.player.next_tick = pygame.time.get_ticks() + pagman.player.interval
     paused = False
@@ -323,6 +390,7 @@ but only {len(l_pacgum)} valid spawn locations available."
             invincible=pagman.player.lives == -1
         )
         for event in pygame.event.get():
+            # vvv COPY into a func vvv
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if buttons["ghost_freeze"].collidepoint(
                     event.pos
@@ -371,6 +439,7 @@ but only {len(l_pacgum)} valid spawn locations available."
                     running_stats = {"lives": pagman.player.lives,
                                      "score": pagman.player.score}
                     return (True, running_stats)
+            # ^^^ COPY into a func ^^^
             if event.type == pygame.QUIT:
                 running_stats = {"lives": pagman.player.lives,
                                  "score": pagman.player.score}
@@ -420,7 +489,7 @@ but only {len(l_pacgum)} valid spawn locations available."
                                  "score": pagman.player.score}
                 return (True, running_stats)
         if not paused:
-            current_time = pygame.time.get_ticks()
+            current_time = pygame.time.get_ticks() - paused_timer
             pacman_group.update(walls, current_time)
             pacman_group.draw(screen)
             ghost0_group.update(walls, pagman.player, pagman.ghosts)
