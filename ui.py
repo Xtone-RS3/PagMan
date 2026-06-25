@@ -108,11 +108,6 @@ def draw_ui(
     level_skip_text = cheat_font.render("Level skip", True, (255, 255, 255))
     screen.blit(level_skip_text, (screen_x + 25, 330))
 
-    level_skip_minus = pygame.Rect(screen_x + 30+105, 330, 20, 20)
-    pygame.draw.rect(screen, (50, 50, 50), level_skip_minus)
-    level_skip_minus_text = cheat_font.render("-", True, (255, 255, 255))
-    screen.blit(level_skip_minus_text, (screen_x + 36+105, 330))
-
     level_skip_stat_text = cheat_font.render(
         f"{level}", True, (255, 255, 255)
     )
@@ -138,8 +133,7 @@ def draw_ui(
         "life_cheat_minus": life_cheat_minus,
         "self_speed_plus": self_speed_plus,
         "self_speed_minus": self_speed_minus,
-        "level_skip_plus": level_skip_plus,
-        "level_skip_minus": level_skip_minus
+        "level_skip_plus": level_skip_plus
     }
 
 

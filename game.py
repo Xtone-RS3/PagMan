@@ -347,15 +347,13 @@ but only {len(l_pacgum)} valid spawn locations available."
                 if buttons["self_speed_plus"].collidepoint(event.pos):
                     pagman.player.movement.speed += 1
                 if buttons["self_speed_minus"].collidepoint(event.pos):
-                    pagman.player.movement.speed -= 1
+                    if pagman.player.movement.speed > 1:
+                        pagman.player.movement.speed -= 1
                 if buttons["level_skip_plus"].collidepoint(event.pos):
                     # pagman.player.movement.speed += 1
                     running_stats = {"lives": pagman.player.lives,
                                      "score": pagman.player.score}
                     return (True, running_stats)
-                if buttons["level_skip_minus"].collidepoint(event.pos):
-                    # pagman.player.movement.speed -= 1
-                    pass
             if event.type == pygame.QUIT:
                 running_stats = {"lives": pagman.player.lives,
                                  "score": pagman.player.score}
