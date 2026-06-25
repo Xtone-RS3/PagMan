@@ -248,7 +248,9 @@ but only {len(l_pacgum)} valid spawn locations available."
                     pagman.ghosts[3].movement.speed
                 ),
                 pagman.player,
-                level
+                level,
+                ghosts_frozen=pagman.ghosts[0].frozen,
+                invincible=pagman.player.lives == -1
             )
             font = pygame.font.SysFont("Serif", 40, True)
             text = font.render(f"Level: {level}", True, (255, 255, 0))
@@ -303,7 +305,9 @@ but only {len(l_pacgum)} valid spawn locations available."
                 pagman.ghosts[3].movement.speed
             ),
             pagman.player,
-            level
+            level,
+            ghosts_frozen=pagman.ghosts[0].frozen,
+            invincible=pagman.player.lives == -1
         )
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:

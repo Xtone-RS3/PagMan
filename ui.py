@@ -4,6 +4,17 @@ from pygame import Surface
 from typing import Dict, Any, Optional
 import sys
 import json
+import math
+
+
+class UIState:
+    def __init__(self):
+        self.freeze_animation = 0
+        self.invinci_animation = 0
+        self.animation_speed = 0.1
+
+
+_ui_state = UIState()
 
 
 def draw_ui(
@@ -15,114 +26,163 @@ def draw_ui(
         screen_y: int,
         ghost_speed: int,
         player: Player,
-        level: int
+        level: int,
+        ghosts_frozen: bool = False,
+        invincible: bool = False
 ) -> Dict[str, pygame.Rect]:
-    font = pygame.font.SysFont("Serif", 40, True)
-    cheat_font = pygame.font.SysFont("Serif", 20, True)
-    pygame.draw.rect(screen, (0, 0, 0), (screen_x, 0, screen_x+250, screen_x))
+    font_large = pygame.font.SysFont("Serif", 40, True)
+    font_medium = pygame.font.SysFont("Serif", 24, True)
+    font_small = pygame.font.SysFont("Serif", 18, True)
 
-    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
-    lives_text = font.render("Lives:", True, (255, 255, 255))
+    ui_bg_color = (15, 15, 35)
+    ui_border_color = (68, 136, 221)
+    pygame.draw.rect(screen, ui_bg_color, (screen_x, 0, screen_x + 250, screen_y))
+    pygame.draw.line(screen, ui_border_color, (screen_x, 0), (screen_x, screen_y), 3)
+
+    # Score section
+    score_text = font_large.render(f"Score: {score}", True, (255, 255, 0))
+    screen.blit(score_text, (screen_x + 15, 15))
+    pygame.draw.line(screen, ui_border_color, (screen_x + 10, 60), (screen_x + 240, 60), 2)
+
+    # Lives section
+    lives_label = font_medium.render("Lives:", True, (100, 200, 255))
+    screen.blit(lives_label, (screen_x + 15, 75))
 
     life_icon = pygame.image.load("PagMan.png")
     if lives <= 3 and lives > 0:
         for i in range(lives):
-            screen.blit(life_icon, (screen_x + 129 + i * 40, 55))
+            screen.blit(life_icon, (screen_x + 110 + i * 35, 70))
     elif lives == -1:
-        lives_text = font.render("Lives: ∞", True, (255, 255, 255))
+        lives_display = font_medium.render("∞", True, (100, 255, 100))
+        screen.blit(lives_display, (screen_x + 110, 75))
     else:
-        lives_text = font.render(f"Lives: {lives}", True, (255, 255, 255))
+        lives_display = font_medium.render(f"{lives}", True, (255, 150, 150))
+        screen.blit(lives_display, (screen_x + 110, 75))
 
+    # Timer section
     minutes = time_left // 60
     seconds = time_left % 60
-    timer_text = font.render(
-        f"Time: {minutes:02}:{seconds:02}", True, (255, 255, 255)
+    timer_color = (255, 255, 255) if time_left > 30 else (255, 100, 100)
+    timer_text = font_medium.render(
+        f"Time: {minutes:02}:{seconds:02}", True, timer_color
     )
+    screen.blit(timer_text, (screen_x + 15, 115))
+    pygame.draw.line(screen, ui_border_color, (screen_x + 10, 155), (screen_x + 240, 155), 2)
 
-    freeze_btn = pygame.Rect(screen_x + 20, 130, 200, 40)
-    pygame.draw.rect(screen, (50, 50, 50), freeze_btn)
-    freeze_text = font.render("Ghost Freeze", True, (255, 255, 255))
-    screen.blit(freeze_text, (screen_x + 25, 135))
+    # Update animations
+    if ghosts_frozen:
+        _ui_state.freeze_animation = min(1.0, _ui_state.freeze_animation + _ui_state.animation_speed)
+    else:
+        _ui_state.freeze_animation = max(0.0, _ui_state.freeze_animation - _ui_state.animation_speed)
 
-    invinci_btn = pygame.Rect(screen_x + 20, 190, 200, 40)
-    pygame.draw.rect(screen, (50, 50, 50), invinci_btn)
-    invinci_text = font.render("invincibility", True, (255, 255, 255))
-    screen.blit(invinci_text, (screen_x + 25, 195))
+    if invincible:
+        _ui_state.invinci_animation = min(1.0, _ui_state.invinci_animation + _ui_state.animation_speed)
+    else:
+        _ui_state.invinci_animation = max(0.0, _ui_state.invinci_animation - _ui_state.animation_speed)
 
-    ghost_speed_text = cheat_font.render("Ghost Speed", True, (255, 255, 255))
-    screen.blit(ghost_speed_text, (screen_x + 25, 255))
+    # Ghost Freeze button with animation
+    freeze_btn = pygame.Rect(screen_x + 15, 170, 220, 50)
+    freeze_glow = int(50 * _ui_state.freeze_animation)
+    freeze_base_color = (50, 100, 50) if ghosts_frozen else (80, 40, 40)
+    freeze_highlight = (100 + freeze_glow, 150 + freeze_glow, 100 + freeze_glow) if ghosts_frozen else (180 + freeze_glow, 100 + freeze_glow, 100 + freeze_glow)
 
-    ghost_speed_minus = pygame.Rect(screen_x + 30+105, 255, 20, 20)
-    pygame.draw.rect(screen, (50, 50, 50), ghost_speed_minus)
-    ghost_speed_minus_text = cheat_font.render("-", True, (255, 255, 255))
-    screen.blit(ghost_speed_minus_text, (screen_x + 36+105, 255))
+    pygame.draw.rect(screen, freeze_base_color, freeze_btn)
+    pygame.draw.rect(screen, freeze_highlight, freeze_btn, 3)
 
-    ghost_speed_stat_text = cheat_font.render(
-        f"{ghost_speed}", True, (255, 255, 255)
-    )
-    screen.blit(ghost_speed_stat_text, (screen_x + 65+105, 255))
+    freeze_text = font_medium.render("Ghost Freeze", True, (255, 255, 255))
+    screen.blit(freeze_text, (screen_x + 25, 180))
 
-    ghost_speed_plus = pygame.Rect(screen_x + 90+105, 255, 20, 20)
-    pygame.draw.rect(screen, (50, 50, 50), ghost_speed_plus)
-    ghost_speed_plus_text = cheat_font.render("+", True, (255, 255, 255))
-    screen.blit(ghost_speed_plus_text, (screen_x + 93+105, 255))
+    freeze_status = font_small.render("ON" if ghosts_frozen else "OFF", True,
+                                       (100, 255, 100) if ghosts_frozen else (255, 100, 100))
+    screen.blit(freeze_status, (screen_x + 190, 185))
 
-    life_cheat_text = cheat_font.render("Life cheat", True, (255, 255, 255))
-    screen.blit(life_cheat_text, (screen_x + 25, 280))
+    # Invincibility button with animation
+    invinci_btn = pygame.Rect(screen_x + 15, 235, 220, 50)
+    invinci_glow = int(50 * _ui_state.invinci_animation)
+    invinci_base_color = (50, 100, 50) if invincible else (80, 40, 40)
+    invinci_highlight = (100 + invinci_glow, 150 + invinci_glow, 100 + invinci_glow) if invincible else (180 + invinci_glow, 100 + invinci_glow, 100 + invinci_glow)
 
-    life_cheat_minus = pygame.Rect(screen_x + 30+105, 280, 20, 20)
-    pygame.draw.rect(screen, (50, 50, 50), life_cheat_minus)
-    life_cheat_minus_text = cheat_font.render("-", True, (255, 255, 255))
-    screen.blit(life_cheat_minus_text, (screen_x + 36+105, 280))
+    pygame.draw.rect(screen, invinci_base_color, invinci_btn)
+    pygame.draw.rect(screen, invinci_highlight, invinci_btn, 3)
 
-    life_cheat_stat_text = cheat_font.render(
-        f"{lives}", True, (255, 255, 255)
-    )
-    screen.blit(life_cheat_stat_text, (screen_x + 65+105, 280))
+    invinci_text = font_medium.render("Invincibility", True, (255, 255, 255))
+    screen.blit(invinci_text, (screen_x + 25, 245))
 
-    life_cheat_plus = pygame.Rect(screen_x + 90+105, 280, 20, 20)
-    pygame.draw.rect(screen, (50, 50, 50), life_cheat_plus)
-    life_cheat_plus_text = cheat_font.render("+", True, (255, 255, 255))
-    screen.blit(life_cheat_plus_text, (screen_x + 93+105, 280))
+    invinci_status = font_small.render("ON" if invincible else "OFF", True,
+                                        (100, 255, 100) if invincible else (255, 100, 100))
+    screen.blit(invinci_status, (screen_x + 190, 250))
 
-    # ###
-    self_speed_text = cheat_font.render("Player speed", True, (255, 255, 255))
-    screen.blit(self_speed_text, (screen_x + 25, 305))
+    pygame.draw.line(screen, ui_border_color, (screen_x + 10, 300), (screen_x + 240, 300), 2)
 
-    self_speed_minus = pygame.Rect(screen_x + 30+105, 305, 20, 20)
-    pygame.draw.rect(screen, (50, 50, 50), self_speed_minus)
-    self_speed_minus_text = cheat_font.render("-", True, (255, 255, 255))
-    screen.blit(self_speed_minus_text, (screen_x + 36+105, 305))
+    # Ghost Speed control
+    ghost_speed_text = font_medium.render("Ghost Speed", True, (100, 200, 255))
+    screen.blit(ghost_speed_text, (screen_x + 15, 320))
 
-    self_speed_stat_text = cheat_font.render(
-        f"{player.movement.speed}", True, (255, 255, 255)
-    )
-    screen.blit(self_speed_stat_text, (screen_x + 65+105, 305))
+    ghost_speed_minus = pygame.Rect(screen_x + 155, 320, 25, 25)
+    pygame.draw.rect(screen, (70, 70, 100), ghost_speed_minus)
+    pygame.draw.rect(screen, (150, 150, 200), ghost_speed_minus, 2)
+    ghost_speed_minus_text = font_small.render("-", True, (255, 255, 255))
+    screen.blit(ghost_speed_minus_text, (screen_x + 162, 318))
 
-    self_speed_plus = pygame.Rect(screen_x + 90+105, 305, 20, 20)
-    pygame.draw.rect(screen, (50, 50, 50), self_speed_plus)
-    self_speed_plus_text = cheat_font.render("+", True, (255, 255, 255))
-    screen.blit(self_speed_plus_text, (screen_x + 93+105, 305))
+    ghost_speed_stat_text = font_small.render(f"{ghost_speed}", True, (255, 200, 100))
+    screen.blit(ghost_speed_stat_text, (screen_x + 195, 323))
 
-    # ###
-    level_skip_text = cheat_font.render("Level skip", True, (255, 255, 255))
-    screen.blit(level_skip_text, (screen_x + 25, 330))
+    ghost_speed_plus = pygame.Rect(screen_x + 215, 320, 25, 25)
+    pygame.draw.rect(screen, (70, 70, 100), ghost_speed_plus)
+    pygame.draw.rect(screen, (150, 150, 200), ghost_speed_plus, 2)
+    ghost_speed_plus_text = font_small.render("+", True, (255, 255, 255))
+    screen.blit(ghost_speed_plus_text, (screen_x + 220, 318))
 
-    level_skip_stat_text = cheat_font.render(
-        f"{level}", True, (255, 255, 255)
-    )
-    screen.blit(level_skip_stat_text, (screen_x + 65+105, 330))
+    # Life cheat control
+    life_cheat_text = font_medium.render("Life Cheat", True, (100, 200, 255))
+    screen.blit(life_cheat_text, (screen_x + 15, 360))
 
-    level_skip_plus = pygame.Rect(screen_x + 90+105, 330, 20, 20)
-    pygame.draw.rect(screen, (50, 50, 50), level_skip_plus)
-    level_skip_plus_text = cheat_font.render("+", True, (255, 255, 255))
-    screen.blit(level_skip_plus_text, (screen_x + 93+105, 330))
-    # ###
+    life_cheat_minus = pygame.Rect(screen_x + 155, 360, 25, 25)
+    pygame.draw.rect(screen, (70, 70, 100), life_cheat_minus)
+    pygame.draw.rect(screen, (150, 150, 200), life_cheat_minus, 2)
+    life_cheat_minus_text = font_small.render("-", True, (255, 255, 255))
+    screen.blit(life_cheat_minus_text, (screen_x + 162, 358))
 
-    screen.blit(score_text, (screen_x + 20, 10))
-    screen.blit(lives_text, (screen_x + 20, 50))
-    screen.blit(timer_text, (screen_x + 20, 90))
-    screen.blit(freeze_text, (screen_x + 25, 135))
+    life_cheat_stat_text = font_small.render(f"{lives if lives >= 0 else '∞'}", True, (255, 200, 100))
+    screen.blit(life_cheat_stat_text, (screen_x + 195, 363))
+
+    life_cheat_plus = pygame.Rect(screen_x + 215, 360, 25, 25)
+    pygame.draw.rect(screen, (70, 70, 100), life_cheat_plus)
+    pygame.draw.rect(screen, (150, 150, 200), life_cheat_plus, 2)
+    life_cheat_plus_text = font_small.render("+", True, (255, 255, 255))
+    screen.blit(life_cheat_plus_text, (screen_x + 220, 358))
+
+    # Player speed control
+    self_speed_text = font_medium.render("Player Speed", True, (100, 200, 255))
+    screen.blit(self_speed_text, (screen_x + 15, 400))
+
+    self_speed_minus = pygame.Rect(screen_x + 155, 400, 25, 25)
+    pygame.draw.rect(screen, (70, 70, 100), self_speed_minus)
+    pygame.draw.rect(screen, (150, 150, 200), self_speed_minus, 2)
+    self_speed_minus_text = font_small.render("-", True, (255, 255, 255))
+    screen.blit(self_speed_minus_text, (screen_x + 162, 398))
+
+    self_speed_stat_text = font_small.render(f"{player.movement.speed}", True, (255, 200, 100))
+    screen.blit(self_speed_stat_text, (screen_x + 195, 403))
+
+    self_speed_plus = pygame.Rect(screen_x + 215, 400, 25, 25)
+    pygame.draw.rect(screen, (70, 70, 100), self_speed_plus)
+    pygame.draw.rect(screen, (150, 150, 200), self_speed_plus, 2)
+    self_speed_plus_text = font_small.render("+", True, (255, 255, 255))
+    screen.blit(self_speed_plus_text, (screen_x + 220, 398))
+
+    # Level skip control
+    level_skip_text = font_medium.render("Level Skip", True, (100, 200, 255))
+    screen.blit(level_skip_text, (screen_x + 15, 440))
+
+    level_skip_stat_text = font_small.render(f"Lvl: {level}", True, (255, 200, 100))
+    screen.blit(level_skip_stat_text, (screen_x + 155, 443))
+
+    level_skip_plus = pygame.Rect(screen_x + 215, 440, 25, 25)
+    pygame.draw.rect(screen, (70, 70, 100), level_skip_plus)
+    pygame.draw.rect(screen, (150, 150, 200), level_skip_plus, 2)
+    level_skip_plus_text = font_small.render(">>", True, (255, 255, 255))
+    screen.blit(level_skip_plus_text, (screen_x + 216, 438))
 
     return {
         "ghost_freeze": freeze_btn,
