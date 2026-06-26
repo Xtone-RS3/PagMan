@@ -1,6 +1,6 @@
 import pygame
 from player import Player
-from pygame import Surface
+from pygame.surface import Surface
 from typing import Dict, Any, Optional
 import sys
 import json
@@ -26,6 +26,7 @@ def draw_ui(
         ghost_speed: int,
         player: Player,
         level: int,
+        life_icon: Surface,
         ghosts_frozen: bool = False,
         invincible: bool = False
 ) -> Dict[str, pygame.Rect]:
@@ -53,16 +54,15 @@ def draw_ui(
     lives_label = font_medium.render("Lives:", True, (100, 200, 255))
     screen.blit(lives_label, (screen_x + 15, 75))
 
-    life_icon = pygame.image.load("pacmen_and_gums/PagMan.png")
-    if lives <= 3 and lives > 0:
+    if lives <= 4 and lives > 0:
         for i in range(lives):
-            screen.blit(life_icon, (screen_x + 110 + i * 35, 70))
+            screen.blit(life_icon, (screen_x + 95 + i * 35, 70))
     elif lives == -1:
         lives_display = font_medium.render("∞", True, (100, 255, 100))
-        screen.blit(lives_display, (screen_x + 110, 75))
+        screen.blit(lives_display, (screen_x + 95, 75))
     else:
         lives_display = font_medium.render(f"{lives}", True, (255, 150, 150))
-        screen.blit(lives_display, (screen_x + 110, 75))
+        screen.blit(lives_display, (screen_x + 95, 75))
 
     # Timer section
     minutes = time_left // 60
@@ -143,6 +143,10 @@ def draw_ui(
         screen, ui_border_color, (screen_x + 10, 300), (screen_x + 240, 300), 2
     )
 
+    # screen size math
+    left = screen_x + 180
+    right = screen_x + 215
+
     # Ghost Speed control
     ghost_speed_text = font_medium.render("Ghost Speed", True, (100, 200, 255))
     screen.blit(ghost_speed_text, (screen_x + 15, 320))
@@ -156,7 +160,11 @@ def draw_ui(
     ghost_speed_stat_text = font_small.render(
         f"{ghost_speed}", True, (255, 200, 100)
     )
-    screen.blit(ghost_speed_stat_text, (screen_x + 195, 323))
+    screen.blit(
+        ghost_speed_stat_text, (
+            (left + right) // 2 - ghost_speed_stat_text.get_width() // 2, 323
+        )
+    )
 
     ghost_speed_plus = pygame.Rect(screen_x + 215, 320, 25, 25)
     pygame.draw.rect(screen, (70, 70, 100), ghost_speed_plus)
@@ -172,18 +180,22 @@ def draw_ui(
     pygame.draw.rect(screen, (70, 70, 100), life_cheat_minus)
     pygame.draw.rect(screen, (150, 150, 200), life_cheat_minus, 2)
     life_cheat_minus_text = font_small.render("-", True, (255, 255, 255))
-    screen.blit(life_cheat_minus_text, (screen_x + 162, 362))
+    screen.blit(life_cheat_minus_text, (screen_x + 165, 362))
 
     life_cheat_stat_text = font_small.render(
         f"{lives if lives >= 0 else '∞'}", True, (255, 200, 100)
     )
-    screen.blit(life_cheat_stat_text, (screen_x + 195, 363))
+    screen.blit(
+        life_cheat_stat_text, (
+            (left + right) // 2 - life_cheat_stat_text.get_width() // 2, 363
+        )
+    )
 
     life_cheat_plus = pygame.Rect(screen_x + 215, 360, 25, 25)
     pygame.draw.rect(screen, (70, 70, 100), life_cheat_plus)
     pygame.draw.rect(screen, (150, 150, 200), life_cheat_plus, 2)
     life_cheat_plus_text = font_small.render("+", True, (255, 255, 255))
-    screen.blit(life_cheat_plus_text, (screen_x + 220, 362))
+    screen.blit(life_cheat_plus_text, (screen_x + 222, 362))
 
     # Player speed control
     self_speed_text = font_medium.render("Player Speed", True, (100, 200, 255))
@@ -193,18 +205,22 @@ def draw_ui(
     pygame.draw.rect(screen, (70, 70, 100), self_speed_minus)
     pygame.draw.rect(screen, (150, 150, 200), self_speed_minus, 2)
     self_speed_minus_text = font_small.render("-", True, (255, 255, 255))
-    screen.blit(self_speed_minus_text, (screen_x + 162, 398))
+    screen.blit(self_speed_minus_text, (screen_x + 165, 402))
 
     self_speed_stat_text = font_small.render(
         f"{player.movement.speed}", True, (255, 200, 100)
     )
-    screen.blit(self_speed_stat_text, (screen_x + 195, 403))
+    screen.blit(
+        self_speed_stat_text, (
+            (left + right) // 2 - self_speed_stat_text.get_width() // 2, 403
+        )
+    )
 
     self_speed_plus = pygame.Rect(screen_x + 215, 400, 25, 25)
     pygame.draw.rect(screen, (70, 70, 100), self_speed_plus)
     pygame.draw.rect(screen, (150, 150, 200), self_speed_plus, 2)
     self_speed_plus_text = font_small.render("+", True, (255, 255, 255))
-    screen.blit(self_speed_plus_text, (screen_x + 220, 398))
+    screen.blit(self_speed_plus_text, (screen_x + 222, 402))
 
     # Level skip control
     level_skip_text = font_medium.render("Level Skip", True, (100, 200, 255))
@@ -218,8 +234,8 @@ def draw_ui(
     level_skip_plus = pygame.Rect(screen_x + 215, 440, 25, 25)
     pygame.draw.rect(screen, (70, 70, 100), level_skip_plus)
     pygame.draw.rect(screen, (150, 150, 200), level_skip_plus, 2)
-    level_skip_plus_text = font_small.render(">>", True, (255, 255, 255))
-    screen.blit(level_skip_plus_text, (screen_x + 216, 438))
+    level_skip_plus_text = font_small.render("→", True, (255, 255, 255))
+    screen.blit(level_skip_plus_text, (screen_x + 220, 442))
 
     return {
         "ghost_freeze": freeze_btn,

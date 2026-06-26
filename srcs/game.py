@@ -7,7 +7,7 @@ from gums import Pacgum, superPacgum
 from ui import draw_ui, leaderboard, main_menu
 import sys
 import json
-from pygame import Surface
+from pygame.surface import Surface
 
 
 def game(
@@ -233,7 +233,7 @@ but only {len(l_pacgum)} valid spawn locations available."
     pacman_group.add(pagman.player)
     hold_lives = 0
     time_left = config["level_max_time"]
-
+    life_icon = pygame.image.load("pacmen_and_gums/PagMan.png")
     buttons = draw_ui(
         screen,
         pagman.player.score,
@@ -249,6 +249,7 @@ but only {len(l_pacgum)} valid spawn locations available."
         ),
         pagman.player,
         level,
+        life_icon,
         ghosts_frozen=pagman.ghosts[0].frozen,
         invincible=pagman.player.lives == -1
     )
@@ -309,6 +310,7 @@ but only {len(l_pacgum)} valid spawn locations available."
                 ),
                 pagman.player,
                 level,
+                life_icon,
                 ghosts_frozen=pagman.ghosts[0].frozen,
                 invincible=pagman.player.lives == -1
             )
@@ -415,6 +417,7 @@ but only {len(l_pacgum)} valid spawn locations available."
             ),
             pagman.player,
             level,
+            life_icon,
             ghosts_frozen=pagman.ghosts[0].frozen,
             invincible=pagman.player.lives == -1
         )
