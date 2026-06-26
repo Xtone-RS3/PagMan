@@ -431,9 +431,10 @@ def instructions(config: Dict[Any, Any], screen: Surface) -> None:
         instructions = [
             ("Arrow Keys", "Movement"),
             ("P", "Pause / Resume"),
-            ("Collect Pac-Gums", "+10 pts"),
-            ("Collect Super Pac-Gums", "+50 pts + eat ghosts"),
-            ("Ghost Freeze / Invincibility", "Cheat buttons"),
+            ("Collect Pac-Gums", f"+{config['points_per_pacgum']} pts"),
+            ("Collect Super Pac-Gums", f"+{config['points_per_super_pacgum']} pts"),
+            ("Edible Ghosts", f"+{config['points_per_ghost']} pts"),
+            ("Cheats", "6 cheats available in sidebar"),
         ]
         for i, (key, desc) in enumerate(instructions):
             key_text = font_small.render(key, True, (255, 255, 0))
@@ -441,7 +442,7 @@ def instructions(config: Dict[Any, Any], screen: Surface) -> None:
             y = 260 + i * 60
             screen.blit(key_text, (screen.get_width()//4 -
                         key_text.get_width()//2, y))
-            screen.blit(desc_text, (screen.get_width()//2 + 20, y))
+            screen.blit(desc_text, (screen.get_width()//2, y))
 
         pygame.display.flip()
         for event in pygame.event.get():
