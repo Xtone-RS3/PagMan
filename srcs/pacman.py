@@ -110,6 +110,7 @@ class PacMan:
                     cell_x_size=cell_x_size,
                     cell_y_size=cell_y_size,
                     maze_offset_x=self.maze_offset_x,
-                    maze_offset_y=self.maze_offset_y
+                    maze_offset_y=self.maze_offset_y,
+                    config=self.config
                 )
             )

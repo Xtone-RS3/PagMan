@@ -4,7 +4,8 @@ version = "0.0.1"
 description = "the man that pacs"
 requires-python = "~=3.10.0"
 dependencies = [
-	"pygame"
+	"pygame",
+    "pyinstaller"
 ]
 
 [dependency-groups]

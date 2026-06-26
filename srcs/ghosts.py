@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Dict, List
 import pygame
 from abc import ABC, abstractmethod
 from movement import Movement
@@ -24,7 +24,8 @@ class Ghost(pygame.sprite.Sprite, ABC):
             cell_x_size: float,
             cell_y_size: float,
             maze_offset_x: float = 0,
-            maze_offset_y: float = 0
+            maze_offset_y: float = 0,
+            config: Dict[str, Any] = None
     ):
         """Initializes ghost at the given spawn position.
 
@@ -32,6 +33,7 @@ class Ghost(pygame.sprite.Sprite, ABC):
         for collision detection.
         """
         super().__init__()
+        self.config = config
         self.is_alive = True
         self.is_edible = False
         self.spawn = spawn  # [x, y]
@@ -148,7 +150,7 @@ class Ghost(pygame.sprite.Sprite, ABC):
             self.movement.speed = self.base_speed
 
         if self.rect.colliderect(player.rect):
-            player.score_gain(100)
+            player.score_gain(self.config["points_per_ghost"])
             self.is_edible = False
             self.is_alive = False
             self.movement.speed = self.base_speed
@@ -276,7 +278,8 @@ class redGhost(Ghost):
             cell_x_size: float,
             cell_y_size: float,
             maze_offset_x: float = 0,
-            maze_offset_y: float = 0
+            maze_offset_y: float = 0,
+            config: Dict[str, Any] = None
     ):
         super().__init__(
             spawn,
@@ -285,7 +288,8 @@ class redGhost(Ghost):
             cell_x_size,
             cell_y_size,
             maze_offset_x,
-            maze_offset_y
+            maze_offset_y,
+            config
         )
     """Red ghost with direct chase behavior.
 
@@ -331,7 +335,8 @@ class orangeGhost(Ghost):
             cell_x_size: float,
             cell_y_size: float,
             maze_offset_x: float = 0,
-            maze_offset_y: float = 0
+            maze_offset_y: float = 0,
+            config: Dict[str, Any] = None
     ):
         super().__init__(
             spawn,
@@ -340,7 +345,8 @@ class orangeGhost(Ghost):
             cell_x_size,
             cell_y_size,
             maze_offset_x,
-            maze_offset_y
+            maze_offset_y,
+            config
         )
     """Orange ghost with random movement behavior.
 
@@ -400,7 +406,8 @@ class pinkGhost(Ghost):
             cell_x_size: float,
             cell_y_size: float,
             maze_offset_x: float = 0,
-            maze_offset_y: float = 0
+            maze_offset_y: float = 0,
+            config: Dict[str, Any] = None
     ):
         super().__init__(
             spawn,
@@ -409,7 +416,8 @@ class pinkGhost(Ghost):
             cell_x_size,
             cell_y_size,
             maze_offset_x,
-            maze_offset_y
+            maze_offset_y,
+            config
         )
     """Pink ghost with ambush behavior.
 
@@ -478,7 +486,8 @@ class cyanGhost(Ghost):
             cell_x_size: float,
             cell_y_size: float,
             maze_offset_x: float = 0,
-            maze_offset_y: float = 0
+            maze_offset_y: float = 0,
+            config: Dict[str, Any] = None
     ):
         super().__init__(
             spawn,
@@ -487,7 +496,8 @@ class cyanGhost(Ghost):
             cell_x_size,
             cell_y_size,
             maze_offset_x,
-            maze_offset_y
+            maze_offset_y,
+            config
         )
         self.last_player_dir = (1, 0)
     """Cyan ghost with predictive ambush behavior.

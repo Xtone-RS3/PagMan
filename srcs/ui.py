@@ -290,6 +290,7 @@ def leaderboard(
     pygame.key.start_text_input()
     valid_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO\
 PQRSTUVWXYZ0123456789 "
+    leaderboard = {}
     if score != 0:
         clock = pygame.time.Clock()
         while True:
@@ -343,17 +344,22 @@ PQRSTUVWXYZ0123456789 "
                 break
             pygame.display.flip()
             clock.tick(30)
-        with open(HS_file) as file:
-            highscores = json.load(file)
-        highscores[name] = score
-        with open(HS_file, "w") as file:
-            json.dump(highscores, file, indent=4)
-    lines = []
-    with open(HS_file) as file:
-        for line in file:
-            if not line.lstrip().startswith("#"):
-                lines.append(line)
-    leaderboard = json.loads("".join(lines))
+        leaderboard = {}
+        try:
+            with open(HS_file) as file:
+                highscores = json.load(file)
+            highscores[name] = score
+            with open(HS_file, "w") as file:
+                json.dump(highscores, file, indent=4)
+            lines = []
+            with open(HS_file) as file:
+                for line in file:
+                    if not line.lstrip().startswith("#"):
+                        lines.append(line)
+            leaderboard = json.loads("".join(lines))
+        except Exception as e:
+            print(f"Error occurred while saving high score: {e}." +
+                  "\nData not saved.")
 
     sorted_leaderboard = sorted(
         leaderboard.items(), key=lambda x: x[1], reverse=True)
