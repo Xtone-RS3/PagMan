@@ -351,16 +351,17 @@ PQRSTUVWXYZ0123456789 "
             highscores[name] = score
             with open(HS_file, "w") as file:
                 json.dump(highscores, file, indent=4)
-            lines = []
-            with open(HS_file) as file:
-                for line in file:
-                    if not line.lstrip().startswith("#"):
-                        lines.append(line)
-            leaderboard = json.loads("".join(lines))
-        except Exception as e:
-            print(f"Error occurred while saving high score: {e}." +
-                  "\nData not saved.")
-
+        except Exception:
+            pass
+    try:
+        lines = []
+        with open(HS_file) as file:
+            for line in file:
+                if not line.lstrip().startswith("#"):
+                    lines.append(line)
+        leaderboard = json.loads("".join(lines))
+    except Exception:
+        print("Error reading highscores file. Ensure it exists and is valid JSON.")
     sorted_leaderboard = sorted(
         leaderboard.items(), key=lambda x: x[1], reverse=True)
 
