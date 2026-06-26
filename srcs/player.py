@@ -122,9 +122,10 @@ class Player(pygame.sprite.Sprite):
             self.update_image()
 
     def death(self) -> None:
-        self.lives -= 1
+        if self.lives > 0:
+            self.lives -= 1
         # death anim
-        if self.lives == 0:
+        if self.lives <= 0:
             # this should only end the game and boot the player to scoreboard
             pygame.event.post(pygame.event.Event(self.player_died))
             # sys.exit()

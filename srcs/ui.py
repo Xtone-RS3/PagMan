@@ -286,7 +286,7 @@ PQRSTUVWXYZ0123456789 "
                         finish_input = True
                     if event.key == pygame.K_ESCAPE:
                         sys.exit()
-            screen.fill((0, 0, 0))
+            screen.fill((10, 10, 26))
 
             # Title
             pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
@@ -319,7 +319,7 @@ PQRSTUVWXYZ0123456789 "
 
             if finish_input is True:
                 pygame.key.stop_text_input()
-                screen.fill((0, 0, 0))
+                screen.fill((10, 10, 26))
                 break
             pygame.display.flip()
             clock.tick(30)
@@ -339,7 +339,7 @@ PQRSTUVWXYZ0123456789 "
         leaderboard.items(), key=lambda x: x[1], reverse=True)
 
     num = 0
-    screen.fill((0, 0, 0))
+    screen.fill((10, 10, 26))
     pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
     screen.blit(pagman_title, (screen_x//2 - pagman_title.get_width()//2, 50))
     press_space = font.render("Press SPACE for Main Menu",
@@ -354,9 +354,11 @@ PQRSTUVWXYZ0123456789 "
     screen.blit(name_header, (screen_x//2 - name_header.get_width()//2, 225))
     screen.blit(score_header, (4*screen_x//5 -
                 score_header.get_width()//2, 225))
-    pygame.draw.line(screen,
-                     (255, 255, 0), (screen_x//5, 265),
-                     (4*screen_x//5, 265), 2)
+    pygame.draw.line(
+        screen, (68, 136, 221),
+        (screen_x//2 - pagman_title.get_width()//2, 165),
+        (screen_x//2 + pagman_title.get_width()//2, 165), 3
+    )
 
     for player in sorted_leaderboard[0:10]:
         rank = font.render(f"#{num+1}", True, (255, 255, 255))
@@ -386,7 +388,7 @@ def instructions(config: Dict[Any, Any], screen: Surface) -> None:
     font_title = pygame.font.SysFont("Serif", 100, True)
     font_small = pygame.font.SysFont("Serif", 28, True)
     while True:
-        screen.fill((0, 0, 0))
+        screen.fill((10, 10, 26))
         pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
         screen.blit(pagman_title, (screen.get_width()//2 -
                     pagman_title.get_width()//2, 50))
@@ -394,11 +396,11 @@ def instructions(config: Dict[Any, Any], screen: Surface) -> None:
                                   True, (255, 255, 255))
         screen.blit(press_space, (screen.get_width()//2 -
                     press_space.get_width()//2, 175))
-
-        # Separator line
-        pygame.draw.line(screen, (255, 255, 0),
-                         (screen.get_width()//4, 220),
-                         (3*screen.get_width()//4, 220), 2)
+        pygame.draw.line(
+            screen, (68, 136, 221),
+            (screen.get_width()//2 - pagman_title.get_width()//2, 165),
+            (screen.get_width()//2 + pagman_title.get_width()//2, 165), 3
+        )
 
         instructions = [
             ("Arrow Keys", "Movement"),

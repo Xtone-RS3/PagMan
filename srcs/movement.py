@@ -47,10 +47,14 @@ class Movement():
     ) -> tuple[int, int]:
         self.next_dir_x, self.next_dir_y = next_dir_x, next_dir_y
         # Calculate the center pixel of the current grid cell
-        target_pixel_x = self.grid_x * self.cell_x_size + self.cell_x_size / 2
-        + self.maze_offset_x
-        target_pixel_y = self.grid_y * self.cell_y_size + self.cell_y_size / 2
-        + self.maze_offset_y
+        target_pixel_x = (
+            self.grid_x * self.cell_x_size + self.cell_x_size / 2 +
+            self.maze_offset_x
+        )
+        target_pixel_y = (
+            self.grid_y * self.cell_y_size + self.cell_y_size / 2 +
+            self.maze_offset_y
+        )
 
         # Check if we are at the center of the current cell
         if (abs(self.pixel_x - target_pixel_x) <= self.speed and

@@ -568,7 +568,7 @@ but only {len(l_pacgum)} valid spawn locations available."
                 if event.type != player_died:
                     pygame.event.post(event)
             success, stats = wait_for_keypress("You died! Press any" +
-                                               "key to respawn")
+                                               " key to respawn")
             if not success:
                 return (False, stats)
             death_freeze_elapsed += (pygame.time.get_ticks() - death_time)
