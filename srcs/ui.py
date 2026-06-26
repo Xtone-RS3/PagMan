@@ -256,7 +256,6 @@ def leaderboard(
     pygame.init()
     HS_file = config["highscore_filename"]
     if screen is None:
-        print("here")
         screen_x = 720
         screen_y = 720
         screen = pygame.display.set_mode((screen_x, screen_y))
@@ -432,7 +431,6 @@ def main_menu(
 ) -> None:
     from game import game_start
     if screen is None:
-        print("here")
         pygame.init()
         screen_x = 720
         screen_y = 720

@@ -635,7 +635,10 @@ if __name__ == "__main__":
             for line in file:
                 if not line.lstrip().startswith("#"):
                     lines.append(line)
+        lines[len(lines)-2] = lines[len(lines)-2].replace(",", "")
         config: Dict = json.loads("".join(lines))
+        if not set(list(config_default.keys())).issubset(list(config.keys())):
+            raise Exception("Parsing error")
         if not isinstance(config["highscore_filename"], str):
             raise Exception("Parsing error")
         config_hold = config.copy()
@@ -643,9 +646,16 @@ if __name__ == "__main__":
         for config_key, config_value in config_hold.items():
             if not isinstance(config_value, int):
                 raise Exception("Parsing error")
-        if not set(list(config_default.keys())).issubset(list(config.keys())):
-            raise Exception("Parsing error")
+            if config_value < 0 and config_key in list(config_default.keys()):
+                raise Exception(f"{config_key} cannot be negative")
+        if config["width"] < 11 or config["height"] < 14:
+            raise Exception("Map too small")
+    except json.JSONDecodeError:
+        print("JSON Error")
+        print(f"Using default values:\n{config_default}")
+        config = config_default
     except Exception as e:
         print(e)
+        print(f"Using default values:\n{config_default}")
         config = config_default
     main_menu(config)

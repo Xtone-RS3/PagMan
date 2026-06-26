@@ -1,8 +1,9 @@
 {
 	"highscore_filename":"HS.json",
 	"level_cap":10,
-	"width": 15,
-	"height":15,
+	#map must be at least 14*14
+	"width": 45,
+	"height":45,
 	"lives":3,
 	"pacgum":42,
 	"points_per_pacgum":10,
