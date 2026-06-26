@@ -11,7 +11,8 @@ from pygame.rect import Rect
 class Ghost(pygame.sprite.Sprite, ABC):
     """Base class for all ghost enemies.
 
-    Handles ghost movement, collision with player, edible state, and respawning.
+    Handles ghost movement, collision with player, edible state, and\
+        respawning.
     Each ghost type has different AI behavior implemented in subclasses.
     """
 
@@ -75,7 +76,8 @@ class Ghost(pygame.sprite.Sprite, ABC):
     def update(
         self, walls: Any, player: Player, ghosts: List["Ghost"]
     ) -> None:
-        """Updates ghost state and position. Must be implemented by subclasses."""
+        """Updates ghost state and position. Must be implemented by subclasses.
+        """
         pass
 
     def eye_update(self) -> None:
@@ -487,6 +489,7 @@ class cyanGhost(Ghost):
             maze_offset_x,
             maze_offset_y
         )
+        self.last_player_dir = (1, 0)
     """Cyan ghost with predictive ambush behavior.
 
     Tracks player's movement direction and aims to intercept 2 cells

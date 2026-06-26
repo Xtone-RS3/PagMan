@@ -2,6 +2,7 @@ from typing import Any
 import pygame
 from movement import Movement
 from pygame.rect import Rect
+from paths import asset
 
 
 class Player(pygame.sprite.Sprite):
@@ -40,8 +41,10 @@ class Player(pygame.sprite.Sprite):
         self.lives = lives
         self.score = score
         self.just_died = False
-        self.orig_image = [pygame.image.load("pacmen_and_gums/PagMan.png"),
-                           pygame.image.load("pacmen_and_gums/PauseMan.png")]
+        self.orig_image = [
+            pygame.image.load(asset("pacmen_and_gums", "PagMan.png")),
+            pygame.image.load(asset("pacmen_and_gums", "PauseMan.png"))
+        ]
         a = int(cell_x_size * 2/3)
         b = int(cell_y_size * 2/3)
         size = min(a, b)

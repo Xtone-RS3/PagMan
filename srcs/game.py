@@ -8,6 +8,7 @@ from ui import draw_ui, leaderboard, main_menu
 import sys
 import json
 from pygame.surface import Surface
+from paths import asset
 
 
 def game(
@@ -153,15 +154,15 @@ def game(
     spawn_y = mid_row * cell_y_size + cell_y_size / 2
     image_list = {}
     folder = {
-        "cyan": "ghosts/cyan_ghost.png",
-        "red": "ghosts/red_ghost.png",
-        "orange": "ghosts/orange_ghost.png",
-        "pink": "ghosts/pink_ghost.png",
-        "right_eyes": "ghosts/right_eyes.png",
-        "left_eyes": "ghosts/left_eyes.png",
-        "up_eyes": "ghosts/up_eyes.png",
-        "down_eyes": "ghosts/down_eyes.png",
-        "dead": "ghosts/dead.png"
+        "cyan": asset("ghosts", "cyan_ghost.png"),
+        "red": asset("ghosts", "red_ghost.png"),
+        "orange": asset("ghosts", "orange_ghost.png"),
+        "pink": asset("ghosts", "pink_ghost.png"),
+        "right_eyes": asset("ghosts", "right_eyes.png"),
+        "left_eyes": asset("ghosts", "left_eyes.png"),
+        "up_eyes": asset("ghosts", "up_eyes.png"),
+        "down_eyes": asset("ghosts", "down_eyes.png"),
+        "dead": asset("ghosts", "dead.png")
     }
     for key, file in folder.items():
         image_list[key] = pygame.image.load(file)
@@ -235,7 +236,7 @@ but only {len(l_pacgum)} valid spawn locations available."
     pacman_group.add(pagman.player)
     hold_lives = 0
     time_left = config["level_max_time"]
-    life_icon = pygame.image.load("pacmen_and_gums/PagMan.png")
+    life_icon = pygame.image.load(asset("pacmen_and_gums", "PagMan.png"))
     buttons = draw_ui(
         screen,
         pagman.player.score,
@@ -636,9 +637,9 @@ def game_start(config: Dict[Any, Any]) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        config_file = sys.argv[1]
+        config_file = asset(sys.argv[1])
     else:
-        config_file = "config.json"
+        config_file = asset("config.json")
     lines = []
     config_default = {
         "highscore_filename": "HS.json",

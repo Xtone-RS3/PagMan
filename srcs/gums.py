@@ -1,4 +1,5 @@
 import pygame
+from paths import asset
 
 
 class Pacgum(pygame.sprite.Sprite):
@@ -16,7 +17,7 @@ class Pacgum(pygame.sprite.Sprite):
             size: Size in pixels for the sprite.
         """
         super().__init__()
-        self.image = pygame.image.load("pacmen_and_gums/gum1.png")
+        self.image = pygame.image.load(asset("pacmen_and_gums", "gum1.png"))
         self.image = pygame.transform.scale(self.image, (size, size))
         self.rect = self.image.get_rect()
         self.rect.center = (int(x), int(y))
@@ -39,7 +40,7 @@ class superPacgum(pygame.sprite.Sprite):
             size: Size in pixels for the sprite.
         """
         super().__init__()
-        self.image = pygame.image.load("pacmen_and_gums/gum3.png")
+        self.image = pygame.image.load(asset("pacmen_and_gums", "gum3.png"))
         self.image = pygame.transform.scale(self.image, (size, size))
         self.rect = self.image.get_rect()
         self.rect.center = (int(x), int(y))

@@ -4,10 +4,12 @@ from pygame.surface import Surface
 from typing import Dict, Any, Optional
 import sys
 import json
+from paths import asset
 
 
 class UIState:
-    """Holds animation state for UI effects like ghost freeze and invincibility glow."""
+    """Holds animation state for UI effects like ghost freeze and invincibility
+    glow."""
 
     def __init__(self) -> None:
         self.freeze_animation = 0
@@ -32,7 +34,8 @@ def draw_ui(
         ghosts_frozen: bool = False,
         invincible: bool = False
 ) -> Dict[str, pygame.Rect]:
-    """Draws the game UI sidebar including score, lives, timer, and cheat buttons.
+    """Draws the game UI sidebar including score, lives, timer, and cheat
+    buttons.
 
     Renders the sidebar with score display, remaining lives, countdown timer,
     Ghost Freeze toggle, Invincibility toggle, and sliders for ghost speed,
@@ -264,12 +267,14 @@ def leaderboard(
 ) -> None:
     """Displays the game over screen and leaderboard.
 
-    If a score is provided, prompts the player to enter their name (max 10 characters).
-    Saves the score to the highscore file, then displays the top 10 scores sorted
+    If a score is provided, prompts the player to enter their name (max 10
+    characters).
+    Saves the score to the highscore file, then displays the top 10 scores
+    sorted
     in descending order. Waits for SPACE to return to main menu or ESC to exit.
     """
     pygame.init()
-    HS_file = config["highscore_filename"]
+    HS_file = asset(config["highscore_filename"])
     if screen is None:
         screen_x = 720
         screen_y = 720

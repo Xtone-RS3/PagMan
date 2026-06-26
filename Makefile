@@ -2,6 +2,15 @@
 # CONFIG
 # =========================
 
+# pyinstaller \
+    --onefile \
+    --windowed \
+    --add-data "pacmen_and_gums:pacmen_and_gums" \
+    --add-data "ghosts:ghosts" \
+    --add-data "HS.json:." \
+    --add-data "config.json:." \
+    --add-data "mazegenerator:mazegenerator" srcs/game.py --exclude-module pkg_resources
+
 SHELL := /bin/bash
 
 UV := uv
