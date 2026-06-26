@@ -564,7 +564,7 @@ but only {len(l_pacgum)} valid spawn locations available."
             death_time = pygame.time.get_ticks()
             while True:
                 event = pygame.event.poll()
-                if event.type == pygame.NOEVENT:
+                if event.type == pygame.NOEVENT or event.type == player_died:
                     break
                 if event.type != player_died:
                     pygame.event.post(event)
@@ -579,10 +579,12 @@ but only {len(l_pacgum)} valid spawn locations available."
         pygame.display.flip()
 
 
+PLAYER_DIED = pygame.event.custom_type()
+
+
 def game_start(config: Dict[Any, Any]) -> None:
     score = 0
     pygame.init()
-    PLAYER_DIED = pygame.event.custom_type()
     screen_x = 720
     cell_x_size = screen_x/config["width"]
     screen_y = 720

@@ -151,10 +151,10 @@ def draw_ui(
     pygame.draw.rect(screen, (70, 70, 100), ghost_speed_minus)
     pygame.draw.rect(screen, (150, 150, 200), ghost_speed_minus, 2)
     ghost_speed_minus_text = font_small.render("-", True, (255, 255, 255))
-    screen.blit(ghost_speed_minus_text, (screen_x + 162, 318))
+    screen.blit(ghost_speed_minus_text, (screen_x + 165, 322))
 
     ghost_speed_stat_text = font_small.render(
-        f"{ghost_speed}", True, (255, 200, 100)  # make this speed value independent from the real value, the display value only edits itself
+        f"{ghost_speed}", True, (255, 200, 100)
     )
     screen.blit(ghost_speed_stat_text, (screen_x + 195, 323))
 
@@ -162,7 +162,7 @@ def draw_ui(
     pygame.draw.rect(screen, (70, 70, 100), ghost_speed_plus)
     pygame.draw.rect(screen, (150, 150, 200), ghost_speed_plus, 2)
     ghost_speed_plus_text = font_small.render("+", True, (255, 255, 255))
-    screen.blit(ghost_speed_plus_text, (screen_x + 220, 318))
+    screen.blit(ghost_speed_plus_text, (screen_x + 222, 322))
 
     # Life cheat control
     life_cheat_text = font_medium.render("Life Cheat", True, (100, 200, 255))
@@ -172,7 +172,7 @@ def draw_ui(
     pygame.draw.rect(screen, (70, 70, 100), life_cheat_minus)
     pygame.draw.rect(screen, (150, 150, 200), life_cheat_minus, 2)
     life_cheat_minus_text = font_small.render("-", True, (255, 255, 255))
-    screen.blit(life_cheat_minus_text, (screen_x + 162, 358))
+    screen.blit(life_cheat_minus_text, (screen_x + 162, 362))
 
     life_cheat_stat_text = font_small.render(
         f"{lives if lives >= 0 else '∞'}", True, (255, 200, 100)
@@ -183,7 +183,7 @@ def draw_ui(
     pygame.draw.rect(screen, (70, 70, 100), life_cheat_plus)
     pygame.draw.rect(screen, (150, 150, 200), life_cheat_plus, 2)
     life_cheat_plus_text = font_small.render("+", True, (255, 255, 255))
-    screen.blit(life_cheat_plus_text, (screen_x + 220, 358))
+    screen.blit(life_cheat_plus_text, (screen_x + 220, 362))
 
     # Player speed control
     self_speed_text = font_medium.render("Player Speed", True, (100, 200, 255))
@@ -240,6 +240,7 @@ def leaderboard(
     pygame.init()
     HS_file = config["highscore_filename"]
     if screen is None:
+        print("here")
         screen_x = 720
         screen_y = 720
         screen = pygame.display.set_mode((screen_x, screen_y))
@@ -415,6 +416,7 @@ def main_menu(
 ) -> None:
     from game import game_start
     if screen is None:
+        print("here")
         pygame.init()
         screen_x = 720
         screen_y = 720
@@ -456,7 +458,9 @@ def main_menu(
 
         for text, option_rect in menu_options:
             pygame.draw.rect(screen, box_bg, option_rect, border_radius=8)
-            pygame.draw.rect(screen, box_border, option_rect, 3, border_radius=8)
+            pygame.draw.rect(
+                screen, box_border, option_rect, 3, border_radius=8
+            )
             option_text = font.render(text, True, (255, 255, 0))
             screen.blit(option_text, (
                 option_rect.centerx - option_text.get_width()//2,
