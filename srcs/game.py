@@ -576,15 +576,7 @@ but only {len(l_pacgum)} valid spawn locations available."
         # Respawn player and wait screen after death
         if pagman.player.just_died:
             pagman.player.just_died = False
-            # Drain only player_died events from queue to prevent them
-            # from being consumed before reaching wait_for_keypress
             death_time = pygame.time.get_ticks()
-            while True:
-                event = pygame.event.poll()
-                if event.type == pygame.NOEVENT or event.type == player_died:
-                    break
-                if event.type != player_died:
-                    pygame.event.post(event)
             success, stats = wait_for_keypress("You died! Press any" +
                                                " key to respawn")
             if not success:
