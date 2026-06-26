@@ -179,11 +179,29 @@ def game(
     spwans = [(0, 0), (0, maze._height-1),
               (maze._width-1, 0), (maze._width-1, maze._height-1),
               (pagman.player.grid_x, pagman.player.grid_y)]
+    size = min(cell_x_size * (2/3), cell_y_size * (2/3))
+    super_spawns = [
+        (cell_x_size / 2, cell_y_size * mid_row + cell_y_size / 2),
+        (cell_x_size * mid_col + cell_x_size / 2, cell_y_size / 2),
+        (cell_x_size * mid_col + cell_x_size / 2,
+         cell_y_size * (maze._height - 1) + cell_y_size / 2),
+        (cell_x_size * (maze._width - 1) + cell_x_size / 2,
+         cell_y_size * mid_row + cell_y_size / 2),
+    ]
+    super_spawn_coords = set()
+    for sx, sy in super_spawns:
+        gx = int(sx / cell_x_size)
+        gy = int(sy / cell_y_size)
+        if (gx, gy) not in spwans:
+            super_spawn_coords.add((gx, gy))
+            super_pacgum_group.add(superPacgum(sx + maze_offset_x, sy +
+                                               maze_offset_y, size))
     l_pacgum: List[tuple[float, float]] = []
     for row in range(maze._height):
         for col in range(maze._width):
             gum_spawn = maze.maze[row][col]
-            if gum_spawn != 15 and (col, row) not in spwans:
+            if gum_spawn != 15 and (col, row) not in spwans and (col, row) \
+                    not in super_spawn_coords:
                 cx = col * cell_x_size + cell_x_size / 2 + maze_offset_x
                 cy = row * cell_y_size + cell_y_size / 2 + maze_offset_y
                 l_pacgum.append((cx, cy))
@@ -192,34 +210,12 @@ def game(
             f"Warning: Requested {config['pacgum']} pacgums,\
 but only {len(l_pacgum)} valid spawn locations available."
         )
-    size = min(cell_x_size * (2/3), cell_y_size * (2/3))
     for i in range(config["pacgum"]):
         if not l_pacgum:
             break
         spawn = random.choice(l_pacgum)
         l_pacgum.remove(spawn)
         pacgum_group.add(Pacgum(spawn[0], spawn[1], size))
-    super_spawns = []
-    super_spawns.append(
-        (cell_x_size / 2 + maze_offset_x, cell_y_size * mid_row + cell_y_size
-            / 2 + maze_offset_y)
-    )
-    super_spawns.append(
-        (cell_x_size * mid_col + cell_x_size / 2 + maze_offset_x, cell_y_size
-            / 2 + maze_offset_y)
-    )
-    super_spawns.append(
-        (cell_x_size * mid_col + cell_x_size / 2 + maze_offset_x,
-         cell_y_size * (maze._height - 1) + cell_y_size / 2 + maze_offset_y)
-    )
-    super_spawns.append(
-        (cell_x_size * (maze._width - 1) + cell_x_size / 2 + maze_offset_x,
-         cell_y_size * mid_row + cell_y_size / 2 + maze_offset_y)
-    )
-    for spawn in super_spawns:
-        if spawn in spwans:
-            continue
-        super_pacgum_group.add(superPacgum(spawn[0], spawn[1], size))
 
     pacman_group: pygame.sprite.Group = pygame.sprite.Group()
     ghost0_group: pygame.sprite.Group = pygame.sprite.Group()
