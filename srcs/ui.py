@@ -423,36 +423,50 @@ def main_menu(
         screen_x = pygame.display.Info().current_w
         screen_y = pygame.display.Info().current_h
 
+    bg_color = (10, 10, 26)
+    box_bg = (15, 15, 35)
+    box_border = (68, 136, 221)
     font = pygame.font.SysFont("Serif", 40, True)
     font_title = pygame.font.SysFont("Serif", 100, True)
     while True:
-        screen.fill((0, 0, 0))
+        screen.fill(bg_color)
+
+        # Title
         pagman_title = font_title.render("PAG-MAN", True, (255, 255, 0))
         screen.blit(pagman_title, (screen_x//2 -
                     pagman_title.get_width()//2, 50))
-        ###
-        game_start_rect = pygame.Rect(250, 210, 210, 50)
-        pygame.draw.rect(screen, (255, 255, 255), game_start_rect, 2)
-        game_start_text = font.render("Start Game", True, (255, 255, 255))
-        screen.blit(game_start_text, (255, 215))
-        # ###
-        hs_rect = pygame.Rect(250, 310, 210, 50)
-        pygame.draw.rect(screen, (255, 255, 255), hs_rect, 2)
-        hs_text = font.render("HighScores", True, (255, 255, 255))
-        screen.blit(hs_text, (255, 315))
-        # ###
-        instructions_rect = pygame.Rect(250, 410, 210, 50)
-        pygame.draw.rect(screen, (255, 255, 255), instructions_rect, 2)
-        instructions_text = font.render("Instructions", True, (255, 255, 255))
-        screen.blit(instructions_text, (255, 415))
-        # ###
-        exit_rect = pygame.Rect(250, 510, 210, 50)
-        pygame.draw.rect(screen, (255, 255, 255), exit_rect, 2)
-        exit_text = font.render("Exit", True, (255, 255, 255))
-        screen.blit(exit_text, (255, 515))
-        # ###
+        # Title underline
+        pygame.draw.line(
+            screen, box_border,
+            (screen_x//2 - pagman_title.get_width()//2, 165),
+            (screen_x//2 + pagman_title.get_width()//2, 165), 3
+        )
+
+        game_start_rect = pygame.Rect(screen_x//2 - 130, 220, 260, 60)
+        hs_rect = pygame.Rect(screen_x//2 - 130, 310, 260, 60)
+        instructions_rect = pygame.Rect(screen_x//2 - 130, 400, 260, 60)
+        exit_rect = pygame.Rect(screen_x//2 - 130, 490, 260, 60)
+
+        menu_options = [
+            ("Start Game", game_start_rect),
+            ("HighScores", hs_rect),
+            ("Instructions", instructions_rect),
+            ("Exit", exit_rect),
+        ]
+
+        for text, option_rect in menu_options:
+            pygame.draw.rect(screen, box_bg, option_rect, border_radius=8)
+            pygame.draw.rect(screen, box_border, option_rect, 3, border_radius=8)
+            option_text = font.render(text, True, (255, 255, 0))
+            screen.blit(option_text, (
+                option_rect.centerx - option_text.get_width()//2,
+                option_rect.centery - option_text.get_height()//2
+            ))
+
         pygame.display.flip()
         for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if game_start_rect.collidepoint(event.pos):
                     pygame.quit()
@@ -464,8 +478,6 @@ def main_menu(
                 if exit_rect.collidepoint(event.pos):
                     pygame.quit()
                     sys.exit()
-            if event.type == pygame.QUIT:
-                sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()

@@ -242,10 +242,10 @@ but only {len(l_pacgum)} valid spawn locations available."
         screen_x,
         screen_y,
         min(
-            pagman.ghosts[0].movement.speed,
-            pagman.ghosts[1].movement.speed,
-            pagman.ghosts[2].movement.speed,
-            pagman.ghosts[3].movement.speed
+            pagman.ghosts[0].base_speed,
+            pagman.ghosts[1].base_speed,
+            pagman.ghosts[2].base_speed,
+            pagman.ghosts[3].base_speed
         ),
         pagman.player,
         level,
@@ -253,8 +253,36 @@ but only {len(l_pacgum)} valid spawn locations available."
         invincible=pagman.player.lives == -1
     )
 
-    def wait_for_keypress(message: str = "Press any key to start") -> \
-            Tuple[bool, Dict]:
+    def draw_text_box(
+        screen: Surface,
+        text: str,
+        x: int,
+        y: int,
+        font: pygame.font.Font,
+        text_color: tuple[int, int, int] = (255, 255, 0),
+        box_color: tuple[int, int, int] = (15, 15, 35),
+        border_color: tuple[int, int, int] = (68, 136, 221),
+        padding: int = 12,
+        border_width: int = 2
+    ) -> None:
+        text_surf = font.render(text, True, text_color)
+        box_rect = pygame.Rect(
+            x - text_surf.get_width() // 2 - padding,
+            y - text_surf.get_height() // 2 - padding,
+            text_surf.get_width() + padding * 2,
+            text_surf.get_height() + padding * 2
+        )
+        pygame.draw.rect(screen, box_color, box_rect, border_radius=6)
+        pygame.draw.rect(screen, border_color, box_rect, border_width,
+                         border_radius=6)
+        screen.blit(text_surf, (
+            x - text_surf.get_width() // 2,
+            y - text_surf.get_height() // 2
+        ))
+
+    def wait_for_keypress(
+            message: str = "Press any key to start"
+    ) -> Tuple[bool, Dict]:
         waiting = True
         while waiting:
             screen.fill(black)
@@ -274,10 +302,10 @@ but only {len(l_pacgum)} valid spawn locations available."
                 screen_x,
                 screen_y,
                 min(
-                    pagman.ghosts[0].movement.speed,
-                    pagman.ghosts[1].movement.speed,
-                    pagman.ghosts[2].movement.speed,
-                    pagman.ghosts[3].movement.speed
+                    pagman.ghosts[0].base_speed,
+                    pagman.ghosts[1].base_speed,
+                    pagman.ghosts[2].base_speed,
+                    pagman.ghosts[3].base_speed
                 ),
                 pagman.player,
                 level,
@@ -285,13 +313,14 @@ but only {len(l_pacgum)} valid spawn locations available."
                 invincible=pagman.player.lives == -1
             )
             font = pygame.font.SysFont("Serif", 40, True)
-            text = font.render(f"Level: {level}", True, (255, 255, 0))
-            screen.blit(text, (screen_x // 2 - text.get_width() // 2,
-                        screen_y-900 // 2))
-            # TODO USE THESE .get_ methods to make main screen ui look better
-            text = font.render(message, True, (255, 255, 0))
-            screen.blit(text, (screen_x // 2 - text.get_width() // 2,
-                        screen_y // 2))
+            draw_text_box(
+                screen, f"Level: {level}", screen_x // 2, screen_y // 2 - 60,
+                font, (255, 255, 0)
+            )
+            draw_text_box(
+                screen, message, screen_x // 2, screen_y // 2,
+                font, (255, 255, 0)
+            )
             pygame.display.flip()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -379,10 +408,10 @@ but only {len(l_pacgum)} valid spawn locations available."
             screen_x,
             screen_y,
             min(
-                pagman.ghosts[0].movement.speed,
-                pagman.ghosts[1].movement.speed,
-                pagman.ghosts[2].movement.speed,
-                pagman.ghosts[3].movement.speed
+                pagman.ghosts[0].base_speed,
+                pagman.ghosts[1].base_speed,
+                pagman.ghosts[2].base_speed,
+                pagman.ghosts[3].base_speed
             ),
             pagman.player,
             level,
@@ -508,20 +537,20 @@ but only {len(l_pacgum)} valid spawn locations available."
             ghost1_group.draw(screen)
             ghost2_group.draw(screen)
             ghost3_group.draw(screen)
-            pause_text = font.render("PAUSED", True, (255, 255, 0))
-            screen.blit(pause_text, (screen_x // 2 - pause_text.get_width() //
-                                     2, screen_y // 2))
-            unpause_instructions = font.render("Press P to resume", True,
-                                               (255, 255, 0))
-            screen.blit(unpause_instructions, (screen_x // 2 -
-                        unpause_instructions.get_width() // 2,
-                        screen_y-900 // 2))  # TODO 1/3 of Y
-            menu_instructions = font.render("Press 'space' to Main Menu",
-                                            True, (255, 255, 0))
-            screen.blit(menu_instructions, (screen_x // 2 -
-                                            menu_instructions.get_width() //
-                                            2, screen_y-500 // 2))
-            # TODO 2/3 of Y
+            draw_text_box(
+                screen, "PAUSED", screen_x // 2, screen_y // 2 - 60,
+                font, (255, 255, 0)
+            )
+            draw_text_box(
+                screen, "Press P to resume",
+                screen_x // 2, screen_y // 2,
+                font, (255, 255, 0)
+            )
+            draw_text_box(
+                screen, "Press 'space' to Main Menu",
+                screen_x // 2, screen_y // 2 + 60,
+                font, (255, 255, 0)
+            )
         if time_left <= 0:
             running_stats = {"lives": pagman.player.lives,
                              "score": pagman.player.score}
