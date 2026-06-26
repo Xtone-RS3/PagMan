@@ -5,6 +5,12 @@ from player import Player
 
 
 class PacMan:
+    """Main game entity that manages player and ghosts.
+
+    Coordinates the player character, ghost spawning, and game-level
+    configuration including score tracking and pac-gum management.
+    """
+
     def __init__(
             self,
             maze: MazeGenerator,
@@ -19,6 +25,21 @@ class PacMan:
             maze_offset_x: float,
             maze_offset_y: float
     ):
+        """Initializes Pac-Man game entity.
+
+        Args:
+            maze: The maze generator instance.
+            config: Game configuration dictionary.
+            spawn_x: Player spawn X coordinate.
+            spawn_y: Player spawn Y coordinate.
+            image_list: Dictionary of loaded sprite images.
+            cell_x_size: Cell width in pixels.
+            cell_y_size: Cell height in pixels.
+            score: Initial player score.
+            player_died: Pygame event type for death notification.
+            maze_offset_x: X offset of maze in window.
+            maze_offset_y: Y offset of maze in window.
+        """
         self.maze_offset_x = maze_offset_x
         self.maze_offset_y = maze_offset_y
         self.maze: MazeGenerator = maze
@@ -62,6 +83,12 @@ class PacMan:
         self.ghost_gen(cell_x_size, cell_y_size)
 
     def ghost_gen(self, cell_x_size: float, cell_y_size: float) -> None:
+        """Spawns all four ghosts at their designated positions.
+
+        Args:
+            cell_x_size: Cell width in pixels.
+            cell_y_size: Cell height in pixels.
+        """
         color_class: list[type[Ghost]] = [
             redGhost, orangeGhost, pinkGhost, cyanGhost
         ]

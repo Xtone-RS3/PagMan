@@ -8,7 +8,13 @@ from pygame.surface import Surface
 from pygame.rect import Rect
 
 
-class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
+class Ghost(pygame.sprite.Sprite, ABC):
+    """Base class for all ghost enemies.
+
+    Handles ghost movement, collision with player, edible state, and respawning.
+    Each ghost type has different AI behavior implemented in subclasses.
+    """
+
     def __init__(
             self,
             spawn: tuple[float, float],
@@ -19,6 +25,11 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
             maze_offset_x: float = 0,
             maze_offset_y: float = 0
     ):
+        """Initializes ghost at the given spawn position.
+
+        Loads ghost images, sets up movement system, and prepares hitbox
+        for collision detection.
+        """
         super().__init__()
         self.is_alive = True
         self.is_edible = False
@@ -64,10 +75,15 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
     def update(
         self, walls: Any, player: Player, ghosts: List["Ghost"]
     ) -> None:
+        """Updates ghost state and position. Must be implemented by subclasses."""
         pass
 
     def eye_update(self) -> None:
-        """TODO"""
+        """Updates the ghost's eye direction based on movement.
+
+        Shows normal eyes when alive, frightened face when edible,
+        or just eyes when dead and returning to spawn.
+        """
         if self.is_alive is True and self.is_edible is False:
             self.image = self.body.copy()
             if self.movement.dir_x == 1:
@@ -95,6 +111,11 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
                 self.image = self.eyes[1]
 
     def death_routine(self, player: Player, ghosts: List["Ghost"]) -> None:
+        """Handles ghost collision with player.
+
+        When a ghost collides with the player (and player is not invincible),
+        all ghosts are reset to their spawn positions.
+        """
         if player.lives != -1:
             if self.rect.colliderect(player.rect):
                 for ghost in ghosts:
@@ -114,6 +135,11 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
                 player.death()
 
     def escape(self, walls: Any, player: Player) -> None:
+        """Handles ghost behavior when edible.
+
+        Ghost flees from player using BFS pathfinding. When close to player
+        or at safe distance, takes actions to maximize survival time.
+        """
         current_time = pygame.time.get_ticks()
         if current_time - self.edible_start >= self.edible_duration:
             self.is_edible = False
@@ -166,6 +192,7 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
             if possible_dirs:
                 next_dir_x, next_dir_y = random.choice(possible_dirs)
 
+        # Randomly choose direction when far from player
         self.movement.update(walls, next_dir_x, next_dir_y)
         self.rect.center = (
             int(self.movement.pixel_x),
@@ -173,6 +200,11 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
         )
 
     def respawn(self, walls: Any, player: Player) -> None:
+        """Handles ghost respawn after being eaten.
+
+        Moves ghost back to spawn point using BFS. When ghost reaches spawn
+        and player is far away, ghost becomes alive again.
+        """
         self.movement.speed = self.base_speed*2
         next_dir_x, next_dir_y, path_ghost = self.bfs(walls, self.spawn_coords)
         _, _, path = self.bfs(walls, player.grid_pos)
@@ -192,6 +224,11 @@ class Ghost(pygame.sprite.Sprite, ABC):  # , ABC
     def bfs(
         self, walls: Any, target: tuple[int, int]
     ) -> tuple[int, int, List]:
+        """Finds shortest path to target using Breadth-First Search.
+
+        Returns the next direction to move towards the target and the
+        full path from current position to target.
+        """
         start = (self.movement.grid_x, self.movement.grid_y)
         queue = [start]
         visited = {start}
@@ -248,10 +285,20 @@ class redGhost(Ghost):
             maze_offset_x,
             maze_offset_y
         )
+    """Red ghost with direct chase behavior.
+
+    Always chases the player using BFS pathfinding. The most aggressive
+    ghost type that directly pursues the player.
+    """
 
     def update(
         self, walls: Any, player: Player, ghosts: List["Ghost"]
     ) -> None:
+        """Updates red ghost AI.
+
+        Chases player directly when alive, flees when edible,
+        and respawns when dead.
+        """
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0
@@ -262,7 +309,6 @@ class redGhost(Ghost):
             if not self.frozen:
                 self.death_routine(player, ghosts)
             next_dir_x, next_dir_y, path = self.bfs(walls, player.grid_pos)
-            # Atualiza movimento e posição do sprite
             self.movement.update(walls, next_dir_x, next_dir_y)
             self.rect.center = (
                 int(self.movement.pixel_x),
@@ -294,10 +340,20 @@ class orangeGhost(Ghost):
             maze_offset_x,
             maze_offset_y
         )
+    """Orange ghost with random movement behavior.
+
+    Moves randomly when not chasing, avoiding backtracking.
+    Less aggressive than red ghost.
+    """
 
     def update(
         self, walls: Any, player: Player, ghosts: List["Ghost"]
     ) -> None:
+        """Updates orange ghost AI.
+
+        Moves randomly when chasing, flees when edible,
+        and respawns when dead.
+        """
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0
@@ -353,10 +409,20 @@ class pinkGhost(Ghost):
             maze_offset_x,
             maze_offset_y
         )
+    """Pink ghost with ambush behavior.
+
+    Chases aggressively when far from player (>8 cells), but wanders
+    randomly when close to the player.
+    """
 
     def update(
         self, walls: Any, player: Player, ghosts: List["Ghost"]
     ) -> None:
+        """Updates pink ghost AI.
+
+        Chases aggressively when far, wanders when close, flees when edible,
+        and respawns when dead.
+        """
         if self.frozen:
             self.movement.speed = 0
             pass
@@ -421,11 +487,20 @@ class cyanGhost(Ghost):
             maze_offset_x,
             maze_offset_y
         )
-        self.last_player_dir = (1, 0)
+    """Cyan ghost with predictive ambush behavior.
+
+    Tracks player's movement direction and aims to intercept 2 cells
+    ahead of the player's current position.
+    """
 
     def update(
         self, walls: Any, player: Player, ghosts: List["Ghost"]
     ) -> None:
+        """Updates cyan ghost AI.
+
+        Predicts player position and ambushes ahead, flees when edible,
+        and respawns when dead.
+        """
         self.eye_update()
         if self.frozen:
             self.movement.speed = 0

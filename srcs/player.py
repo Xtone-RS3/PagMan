@@ -5,6 +5,11 @@ from pygame.rect import Rect
 
 
 class Player(pygame.sprite.Sprite):
+    """The player-controlled Pac-Man character.
+
+    Handles player input, movement, animation, death, and score tracking.
+    """
+
     def __init__(
             self,
             spawn: tuple[float, float],
@@ -16,6 +21,18 @@ class Player(pygame.sprite.Sprite):
             maze_offset_x: float = 0,
             maze_offset_y: float = 0
     ):
+        """Initializes the player sprite.
+
+        Args:
+            spawn: Starting position in pixels.
+            cell_x_size: Width of each cell in pixels.
+            cell_y_size: Height of each cell in pixels.
+            lives: Starting number of lives.
+            score: Initial score.
+            player_died: Pygame event type for death notification.
+            maze_offset_x: X offset of maze in window.
+            maze_offset_y: Y offset of maze in window.
+        """
         super().__init__()
         self.spawn = (spawn)  # PacMan class
         self.cell_x_size = cell_x_size
@@ -60,7 +77,12 @@ class Player(pygame.sprite.Sprite):
         self.next_tick = pygame.time.get_ticks() + self.interval
         self.player_died = player_died
 
-    def update_image(self) -> None:  # copy this exact logic for ghost eyes
+    def update_image(self) -> None:
+        """Updates the player sprite based on movement direction.
+
+        Rotates or flips the base sprite image to face the current
+        movement direction.
+        """
         center = self.rect.center
         image = self.orig_image[self.frame]
         if self.movement.dir_x == -1 or (self.movement.dir_x == 0 and
@@ -85,6 +107,10 @@ class Player(pygame.sprite.Sprite):
 
     @property
     def grid_pos(self) -> tuple[int, int]:
+        """Returns the player's current grid position.
+
+        Calculated from pixel position accounting for maze offset.
+        """
         return (
             int((self.movement.pixel_x - self.movement.maze_offset_x) //
                 self.cell_x_size),
@@ -93,6 +119,15 @@ class Player(pygame.sprite.Sprite):
         )
 
     def update(self, walls: Any, current_time: int) -> None:
+        """Updates player state based on keyboard input.
+
+        Reads arrow key input to queue direction changes and updates
+        movement animation frames.
+
+        Args:
+            walls: 2D array representing maze walls.
+            current_time: Current game time in milliseconds.
+        """
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
@@ -122,13 +157,16 @@ class Player(pygame.sprite.Sprite):
             self.update_image()
 
     def death(self) -> None:
+        """Handles player death.
+
+        Decrements lives and either respawns at the start position
+        or posts a death event to end the game.
+        """
         if self.lives > 0:
             self.lives -= 1
         # death anim
         if self.lives <= 0:
-            # this should only end the game and boot the player to scoreboard
             pygame.event.post(pygame.event.Event(self.player_died))
-            # sys.exit()
         else:
             self.movement.pixel_x, self.movement.pixel_y = self.spawn
             self.movement.grid_x = int(
@@ -146,4 +184,9 @@ class Player(pygame.sprite.Sprite):
             self.just_died = True
 
     def score_gain(self, score_gained: int) -> None:
+        """Adds points to the player's score.
+
+        Args:
+            score_gained: Number of points to add.
+        """
         self.score += score_gained

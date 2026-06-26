@@ -22,6 +22,12 @@ def game(
     maze_offset_x: int,
     maze_offset_y: int
 ) -> tuple[bool, Dict[str, int]]:
+    """Main game loop for a single level.
+
+    Generates a maze, spawns pac-gums and ghosts, and runs the game loop
+    until the level is completed or the player loses. Returns a tuple of
+    (completed, stats) where stats contains current lives and score.
+    """
     try:
         maze = MazeGenerator(
             seed=config["seed"] + level,
@@ -262,6 +268,11 @@ but only {len(l_pacgum)} valid spawn locations available."
         padding: int = 12,
         border_width: int = 2
     ) -> None:
+        """Draws a text box with a colored background and border.
+
+        Renders text centered inside a rounded rectangle box with the
+        specified colors and padding.
+        """
         text_surf = font.render(text, True, text_color)
         box_rect = pygame.Rect(
             x - text_surf.get_width() // 2 - padding,
@@ -280,6 +291,12 @@ but only {len(l_pacgum)} valid spawn locations available."
     def wait_for_keypress(
             message: str = "Press any key to start"
     ) -> Tuple[bool, Dict]:
+        """Waits for a keypress while displaying the game state.
+
+        Shows the current game with a message overlay. Handles UI button clicks
+        for cheat controls (ghost freeze, invincibility, speed adjustments).
+        Returns (success, stats) when a key is pressed or level is skipped.
+        """
         waiting = True
         while waiting:
             screen.fill(black)
@@ -377,7 +394,7 @@ but only {len(l_pacgum)} valid spawn locations available."
                         running_stats = {"lives": pagman.player.lives,
                                          "score": pagman.player.score}
                         return (True, running_stats)
-        return (True, {})  # TODO is this correct?
+        return (True, {})
 
     success, stats = wait_for_keypress()
     # if not success:
@@ -555,11 +572,11 @@ but only {len(l_pacgum)} valid spawn locations available."
                              "score": pagman.player.score}
             return (False, running_stats)
 
-        # Respawn do jogador e ecrã de espera caso tenha acabado de morrer
+        # Respawn player and wait screen after death
         if pagman.player.just_died:
             pagman.player.just_died = False
-            # Drenar apenas eventos player_died da queue para evitar que
-            # sejam consumidos antes de chegarmos ao wait_for_keypress
+            # Drain only player_died events from queue to prevent them
+            # from being consumed before reaching wait_for_keypress
             death_time = pygame.time.get_ticks()
             while True:
                 event = pygame.event.poll()
@@ -582,6 +599,12 @@ PLAYER_DIED = pygame.event.custom_type()
 
 
 def game_start(config: Dict[Any, Any]) -> None:
+    """Starts the game from the main menu.
+
+    Initializes the game window, sets up the maze dimensions, and runs
+    through all levels. After completing or losing all levels, shows the
+    leaderboard.
+    """
     score = 0
     pygame.init()
     screen_x = 720

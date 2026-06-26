@@ -7,6 +7,8 @@ import json
 
 
 class UIState:
+    """Holds animation state for UI effects like ghost freeze and invincibility glow."""
+
     def __init__(self) -> None:
         self.freeze_animation = 0
         self.invinci_animation = 0
@@ -30,6 +32,13 @@ def draw_ui(
         ghosts_frozen: bool = False,
         invincible: bool = False
 ) -> Dict[str, pygame.Rect]:
+    """Draws the game UI sidebar including score, lives, timer, and cheat buttons.
+
+    Renders the sidebar with score display, remaining lives, countdown timer,
+    Ghost Freeze toggle, Invincibility toggle, and sliders for ghost speed,
+    player lives, player speed, and level skip. Returns a dict of pygame.Rect
+    objects for click detection on the UI controls.
+    """
     font_large = pygame.font.SysFont("Serif", 40, True)
     font_medium = pygame.font.SysFont("Serif", 24, True)
     font_small = pygame.font.SysFont("Serif", 18, True)
@@ -253,6 +262,12 @@ def draw_ui(
 def leaderboard(
     config: Dict[Any, Any], score: int = 0, screen: Optional[Surface] = None
 ) -> None:
+    """Displays the game over screen and leaderboard.
+
+    If a score is provided, prompts the player to enter their name (max 10 characters).
+    Saves the score to the highscore file, then displays the top 10 scores sorted
+    in descending order. Waits for SPACE to return to main menu or ESC to exit.
+    """
     pygame.init()
     HS_file = config["highscore_filename"]
     if screen is None:
@@ -383,6 +398,12 @@ PQRSTUVWXYZ0123456789 "
 
 
 def instructions(config: Dict[Any, Any], screen: Surface) -> None:
+    """Displays game instructions and controls.
+
+    Shows a list of controls (arrow keys for movement, P for pause, etc.)
+    and explains game mechanics like pac-gums and power-ups. Returns to
+    main menu when SPACE is pressed or exits on ESC.
+    """
     pygame.init()
     font = pygame.font.SysFont("Serif", 40, True)
     font_title = pygame.font.SysFont("Serif", 100, True)
@@ -431,6 +452,12 @@ def instructions(config: Dict[Any, Any], screen: Surface) -> None:
 def main_menu(
     config: Dict[Any, Any], screen: Optional[Surface] = None
 ) -> None:
+    """Displays the main menu with game options.
+
+    Shows the title screen with options to start the game, view highscores,
+    read instructions, or exit. Handles mouse clicks on menu buttons and
+    keyboard shortcuts (SPACE to start, ESC to exit).
+    """
     from game import game_start
     if screen is None:
         pygame.init()
